@@ -117,6 +117,7 @@ body{background:#ffffff;color:#111111;font-family:Georgia,'Times New Roman',seri
 
 <script>
 const API_KEY = '';
+
 const LEVELS=[
   {n:1,name:"Level 1",desc:"1 sentence per card position. 2 keywords per sentence. Brand new to the method."},
   {n:2,name:"Level 2",desc:"2 sentences per position. 2 keywords each. Starting to find your rhythm."},
@@ -222,7 +223,7 @@ async function getTemplate(){
   const prompt=`You are building a Tarot Stories Method fill-in-the-blank story template. This is the Mad Lib method for tarot.\n\nSpread: "${selSpread.name}"\nPositions:\n${posNames}\n\nLevel ${lv}: Write ${lv} sentence(s) per card position.\n\nRules:\n- Use the EXACT position name words in each sentence with minimal connecting words for grammar\n- Each sentence has exactly 2 blanks labeled with the word type\n- First blank is always the main keyword: _______ (noun - Card X), _______ (verb - Card X), or _______ (adjective - Card X)\n- Second blank is always a qualifier — how it makes them feel or a deeper layer: and it makes me feel _______ (adjective - Card X), or and it looks like _______ (noun - Card X)\n- Label every blank with noun, verb, or adjective AND the card number\n- No mystical language. Real human sentences.\n- Vary the word types across positions — don't use all nouns\n- For Level 2+, each additional sentence goes deeper into that position using different word types\n\nFormat your response as just the template sentences, nothing else. No intro, no explanation. Just the sentences with blanks, one position at a time, with the position name as a header.\n\nExample format:\n**Past (Card 1)**\nRight now I am carrying _______ (noun - Card 1) and it is making me feel _______ (adjective - Card 1).\n\n**Present (Card 2)**\nWhat is happening right now is _______ (verb - Card 2) and the energy around it feels _______ (adjective - Card 2).`;
 
   try{
-    const r=await fetch(/api/chat/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":API_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1200,messages:[{role:"user",content:prompt}]})});
+    const r=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1200,messages:[{role:"user",content:prompt}]})});
     const data=await r.json();
     const template=data.content.map(b=>b.text||'').join('').trim();
     generatedTemplate=template;
@@ -277,7 +278,7 @@ async function generate(){
     const STORY_PROMPTS=`THE WANT AND NEED PROMPTS\nWhat do they/you want?\nWhat do they/you actually need?\nWhat are they/you afraid of?\n\nCONFLICT PROMPTS\nWhat's standing in their/your way?\nWhat has to change for this to resolve?\n\nPLOT PROMPTS\nWhat happened just before this moment?\nWhat happens next?\nWhat's the turning point?\n\nTHE REALLY JUICY ONES\nWhat do they/you want the world to think vs what's actually true?\nWhat's the moment everything changed?\n\nTENSION AND STAKES\nWhat do they/you have to lose?\nWhat are they/you willing to sacrifice?\nWhat happens if they/you do nothing?\n\nREVELATION PROMPTS\nWhat don't they/you know yet?\nWhat truth has been hiding in plain sight?\n\nINTERNAL JOURNEY PROMPTS\nWhat do they/you tell themselves/yourself vs what's actually true?\nWhat are they/you pretending not to feel?\nWhat have they/you been waiting for permission to do?`;
     const prompt=`You are a tarot reading coach using the Tarot Stories Method. The reader is at Level 5 — freeform writing.\n\nSpread: "${selSpread.name}"\nCards and what they wrote:\n${cardList}\n\nUsing storytelling coaching principles, respond with these exact headers:\n\n**What you built:**\nWeave their sentences into one connected reading. Honor their words. Connect — don't rewrite.\n\n**What's working:**\nOne sentence on their strongest storytelling move.\n\n**Go deeper:**\nPick 2 prompts from this list that would push their story further:\n${STORY_PROMPTS}`;
     try{
-      const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":API_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1200,messages:[{role:"user",content:prompt}]})});
+      const r=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1200,messages:[{role:"user",content:prompt}]})});
       const data=await r.json();
       const text=data.content.map(b=>b.text||'').join('');
       const secDefs=[{k:"What you built:",l:"What you built"},{k:"What's working:",l:"What's working"},{k:"Go deeper:",l:"Go deeper"}];
