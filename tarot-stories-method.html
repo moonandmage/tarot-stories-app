@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarot Stories Method — Moon & Mage</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#ffffff;color:#111111;font-family:Georgia,'Times New Roman',serif;min-height:100vh;}
+#app{max-width:700px;margin:0 auto;padding:1.5rem 1rem;}
+.app-header{text-align:center;padding:1.5rem 0 1rem;border-bottom:1px solid #b89967;margin-bottom:2rem;}
+.app-title{font-size:24px;font-weight:500;letter-spacing:0.04em;color:#111111;}
+.app-sub{font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:#b89967;margin-top:6px;font-family:Arial,sans-serif;}
+.progress-bar{display:flex;align-items:center;gap:8px;margin-bottom:2rem;justify-content:center;}
+.prog-step{width:22px;height:2px;background:#e0d9d0;}
+.prog-step.active{background:#b89967;}
+.step{display:none;}
+.step.active{display:block;}
+.step-label{font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:#b89967;margin-bottom:8px;font-family:Arial,sans-serif;}
+.step h2{font-size:20px;font-weight:500;margin-bottom:6px;color:#111111;}
+.step .sub{font-size:14px;color:#888888;margin-bottom:1.5rem;font-family:Arial,sans-serif;line-height:1.6;}
+.level-grid{display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:1.5rem;}
+.level-card{border:0.5px solid #e0d9d0;border-radius:12px;padding:1rem 1.25rem;cursor:pointer;background:#ffffff;transition:border-color 0.15s;display:grid;grid-template-columns:40px 1fr;gap:12px;align-items:center;}
+.level-card:hover{border-color:#b89967;}
+.level-card.selected{border:1.5px solid #b89967;background:#f9f7f4;}
+.level-num{font-size:20px;font-weight:500;color:#b89967;text-align:center;}
+.level-name{font-size:15px;font-weight:500;color:#111111;margin-bottom:3px;}
+.level-desc{font-size:13px;color:#888888;font-family:Arial,sans-serif;line-height:1.5;}
+.spread-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1.5rem;}
+.spread-card{border:0.5px solid #e0d9d0;border-radius:12px;padding:1rem 1.25rem;cursor:pointer;background:#ffffff;transition:border-color 0.15s;}
+.spread-card:hover{border-color:#b89967;}
+.spread-card.selected{border:1.5px solid #b89967;background:#f9f7f4;}
+.spread-level{font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:#b89967;margin-bottom:4px;font-family:Arial,sans-serif;}
+.spread-name{font-size:15px;font-weight:500;margin-bottom:4px;color:#111111;}
+.spread-desc{font-size:13px;color:#888888;line-height:1.5;font-family:Arial,sans-serif;}
+.spread-count{display:inline-block;margin-top:8px;font-size:12px;color:#aaaaaa;font-family:Arial,sans-serif;}
+.card-slot{margin-bottom:16px;}
+.slot-header{display:flex;align-items:baseline;gap:8px;margin-bottom:8px;}
+.slot-pos{font-size:14px;font-weight:500;color:#111111;}
+.slot-hint{font-size:11px;color:#b89967;font-family:Arial,sans-serif;letter-spacing:0.05em;}
+.card-name-row{margin-bottom:8px;}
+.card-name-row input[type=text]{width:100%;font-size:14px;padding:9px 12px;border:0.5px solid #e0d9d0;border-radius:8px;background:#ffffff;color:#111111;font-family:Arial,sans-serif;}
+.card-name-row input[type=text]:focus{outline:none;border-color:#b89967;}
+.sentence-rows{display:grid;gap:6px;}
+.sentence-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.sentence-row input[type=text]{width:100%;font-size:13px;padding:8px 10px;border:0.5px solid #e0d9d0;border-radius:8px;background:#ffffff;color:#111111;font-family:Arial,sans-serif;}
+.sentence-row input[type=text]:focus{outline:none;border-color:#b89967;}
+.kw-label{font-size:11px;color:#aaaaaa;font-family:Arial,sans-serif;margin-bottom:3px;}
+.freeform-row textarea{width:100%;font-size:14px;padding:9px 12px;border:0.5px solid #e0d9d0;border-radius:8px;background:#ffffff;color:#111111;font-family:Arial,sans-serif;resize:none;line-height:1.6;}
+.freeform-row textarea:focus{outline:none;border-color:#b89967;}
+.slot-divider{border:none;border-top:0.5px solid #e0d9d0;margin:16px 0;}
+.btn-row{display:flex;gap:10px;justify-content:flex-end;margin-top:1.5rem;}
+.btn-primary{font-size:13px;padding:10px 22px;background:#b89967;color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:Arial,sans-serif;letter-spacing:0.06em;}
+.btn-primary:hover{background:#a0834f;}
+.btn-primary:disabled{opacity:0.4;cursor:not-allowed;}
+.btn-ghost{font-size:13px;padding:10px 18px;background:transparent;color:#888888;border:0.5px solid #e0d9d0;border-radius:8px;cursor:pointer;font-family:Arial,sans-serif;}
+.btn-ghost:hover{border-color:#b89967;color:#111111;}
+.loading{text-align:center;padding:3rem 0;color:#888888;font-family:Arial,sans-serif;font-size:14px;}
+.story-wrap{border:0.5px solid #e0d9d0;border-radius:12px;overflow:hidden;margin-bottom:1.5rem;}
+.story-section{padding:1.25rem 1.5rem;border-bottom:0.5px solid #e0d9d0;}
+.story-section:last-child{border-bottom:none;}
+.story-section-label{font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:#b89967;margin-bottom:8px;font-family:Arial,sans-serif;}
+.story-section p{font-size:15px;line-height:1.8;color:#111111;font-family:Arial,sans-serif;}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="app-header">
+    <div class="app-title">Tarot Stories Method</div>
+    <div class="app-sub">Moon &amp; Mage &middot; The Tarot Circle</div>
+  </div>
+  <div class="progress-bar" id="prog"></div>
+
+  <div class="step active" id="step-0">
+    <div class="step-label">Step 1 of 4</div>
+    <h2>Choose your level</h2>
+    <p class="sub">Be honest with yourself. You can always level up.</p>
+    <div class="level-grid" id="level-grid"></div>
+    <div class="btn-row">
+      <button class="btn-primary" id="btn-pick-level" disabled>Choose this level</button>
+    </div>
+  </div>
+
+  <div class="step" id="step-1">
+    <div class="step-label">Step 2 of 4</div>
+    <h2>Choose your spread</h2>
+    <p class="sub">Start where you are. You can always go deeper.</p>
+    <div class="spread-grid" id="spread-grid"></div>
+    <div class="btn-row">
+      <button class="btn-ghost" id="btn-back-s">Back</button>
+      <button class="btn-primary" id="btn-pick-spread" disabled>Choose this spread</button>
+    </div>
+  </div>
+
+  <div class="step" id="step-2">
+    <div class="step-label">Step 3 of 4</div>
+    <h2>Pull your cards</h2>
+    <p class="sub" id="card-step-sub">Enter each card you pulled.</p>
+    <div id="card-inputs"></div>
+    <div class="btn-row">
+      <button class="btn-ghost" id="btn-back-c">Back</button>
+      <button class="btn-primary" id="btn-gen">Build my story</button>
+    </div>
+  </div>
+
+  <div class="step" id="step-3">
+    <div class="step-label">Step 4 of 4</div>
+    <h2>Your reading</h2>
+    <p class="sub">Read this out loud. All of it.</p>
+    <div id="story-out"></div>
+    <div class="btn-row">
+      <button class="btn-ghost" id="btn-restart">Start over</button>
+      <button class="btn-primary" id="btn-new">New reading</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API_KEY = 'YOUR_ANTHROPIC_API_KEY_HERE';
+
+const LEVELS=[
+  {n:1,name:"Level 1",desc:"1 sentence per card position. 2 keywords per sentence. Brand new to the method."},
+  {n:2,name:"Level 2",desc:"2 sentences per position. 2 keywords each. Starting to find your rhythm."},
+  {n:3,name:"Level 3",desc:"3 sentences per position. 2 keywords each. Building real confidence."},
+  {n:4,name:"Level 4",desc:"4 sentences per position. 2 keywords each. You're getting deep now."},
+  {n:5,name:"Level 5",desc:"Freeform. Write your own sentences using the spread as your guide."}
+];
+
+const SPREADS=[
+  {id:"ppf",name:"Past, Present, Future",level:"Beginner",desc:"Three cards. One clear storyline.",positions:[{name:"Past",hint:"noun + adjective"},{name:"Present",hint:"noun + verb"},{name:"Future",hint:"adjective + verb"}]},
+  {id:"sao",name:"Situation, Action, Outcome",level:"Beginner",desc:"What's happening, what to do, where it leads.",positions:[{name:"Situation",hint:"noun + adjective"},{name:"Action",hint:"noun + verb"},{name:"Outcome",hint:"adjective + verb"}]},
+  {id:"mbs",name:"Mind, Body, Spirit",level:"Intermediate",desc:"A fuller picture of where you are right now.",positions:[{name:"Mind",hint:"noun + adjective"},{name:"Body",hint:"noun + verb"},{name:"Spirit",hint:"adjective + verb"},{name:"Integration",hint:"noun + adjective"},{name:"Message",hint:"noun + verb"}]},
+  {id:"bgp",name:"Block, Gift, Path",level:"Intermediate",desc:"What's in the way, what you have, how to move.",positions:[{name:"The Block",hint:"noun + adjective"},{name:"Hidden Gift",hint:"noun + verb"},{name:"The Path",hint:"adjective + verb"},{name:"Next Step",hint:"noun + adjective"}]},
+  {id:"sc",name:"The Story Cross",level:"Advanced",desc:"Six cards. Full narrative from root to resolution.",positions:[{name:"Root cause",hint:"noun + adjective"},{name:"Crossing energy",hint:"noun + verb"},{name:"Foundation",hint:"adjective + verb"},{name:"Recent past",hint:"noun + adjective"},{name:"Possible future",hint:"noun + verb"},{name:"Resolution",hint:"adjective + verb"}]},
+  {id:"sl",name:"Shadow & Light",level:"Advanced",desc:"What you're avoiding and what's trying to emerge.",positions:[{name:"The shadow",hint:"noun + adjective"},{name:"The wound",hint:"noun + verb"},{name:"The gift inside it",hint:"adjective + verb"},{name:"What light looks like",hint:"noun + adjective"},{name:"The integration",hint:"noun + verb"},{name:"Your next move",hint:"adjective + verb"}]}
+];
+
+let selLevel=null,selSpread=null;
+
+function setStep(n){
+  document.querySelectorAll('.step').forEach(s=>s.classList.remove('active'));
+  document.getElementById('step-'+n).classList.add('active');
+  const bar=document.getElementById('prog');
+  bar.innerHTML='';
+  for(let i=0;i<4;i++){
+    const d=document.createElement('div');
+    d.className='prog-step'+(i<=n?' active':'');
+    bar.appendChild(d);
+  }
+}
+
+function renderLevels(){
+  const g=document.getElementById('level-grid');
+  g.innerHTML='';
+  LEVELS.forEach(lv=>{
+    const d=document.createElement('div');
+    d.className='level-card';
+    d.innerHTML=`<div class="level-num">${lv.n}</div><div><div class="level-name">${lv.name}</div><div class="level-desc">${lv.desc}</div></div>`;
+    d.addEventListener('click',()=>{
+      document.querySelectorAll('.level-card').forEach(c=>c.classList.remove('selected'));
+      d.classList.add('selected');
+      selLevel=lv;
+      document.getElementById('btn-pick-level').disabled=false;
+    });
+    g.appendChild(d);
+  });
+}
+
+function renderSpreads(){
+  const g=document.getElementById('spread-grid');
+  g.innerHTML='';
+  SPREADS.forEach(sp=>{
+    const d=document.createElement('div');
+    d.className='spread-card';
+    d.innerHTML=`<div class="spread-level">${sp.level}</div><div class="spread-name">${sp.name}</div><div class="spread-desc">${sp.desc}</div><span class="spread-count">${sp.positions.length} cards</span>`;
+    d.addEventListener('click',()=>{
+      document.querySelectorAll('.spread-card').forEach(c=>c.classList.remove('selected'));
+      d.classList.add('selected');
+      selSpread=sp;
+      document.getElementById('btn-pick-spread').disabled=false;
+    });
+    g.appendChild(d);
+  });
+}
+
+function renderCardInputs(){
+  const c=document.getElementById('card-inputs');
+  c.innerHTML='';
+  const lv=selLevel.n;
+  document.getElementById('card-step-sub').textContent=lv===5?'Enter each card and write your own sentences.':'Enter each card and fill in your keywords.';
+  selSpread.positions.forEach((pos,i)=>{
+    const slot=document.createElement('div');
+    slot.className='card-slot';
+    let inner=`<div class="slot-header"><div class="slot-pos">${pos.name}</div><div class="slot-hint">${pos.hint}</div></div>`;
+    inner+=`<div class="card-name-row"><input type="text" id="cn${i}" placeholder="Card name (e.g. The Moon)" /></div>`;
+    if(lv===5){
+      inner+=`<div class="freeform-row"><textarea id="cf${i}" rows="3" placeholder="Write your sentences about this card..."></textarea></div>`;
+    } else {
+      inner+=`<div class="sentence-rows">`;
+      for(let s=0;s<lv;s++){
+        inner+=`<div><div class="kw-label">Sentence ${s+1}</div><div class="sentence-row"><input type="text" id="kw${i}_${s}_0" placeholder="keyword 1" /><input type="text" id="kw${i}_${s}_1" placeholder="keyword 2" /></div></div>`;
+      }
+      inner+=`</div>`;
+    }
+    if(i<selSpread.positions.length-1) inner+=`<hr class="slot-divider">`;
+    slot.innerHTML=inner;
+    c.appendChild(slot);
+  });
+}
+
+async function generate(){
+  const lv=selLevel.n;
+  const positions=selSpread.positions;
+  let cardData=[];
+  for(let i=0;i<positions.length;i++){
+    const cardName=document.getElementById('cn'+i).value.trim();
+    if(!cardName) return;
+    const entry={position:positions[i].name,card:cardName};
+    if(lv===5){
+      entry.freeform=document.getElementById('cf'+i).value.trim();
+    } else {
+      entry.sentences=[];
+      for(let s=0;s<lv;s++){
+        entry.sentences.push([document.getElementById(`kw${i}_${s}_0`).value.trim(),document.getElementById(`kw${i}_${s}_1`).value.trim()]);
+      }
+    }
+    cardData.push(entry);
+  }
+  setStep(3);
+  const out=document.getElementById('story-out');
+  out.innerHTML='<div class="loading">Building your story...</div>';
+  let cardList='';
+  cardData.forEach(cd=>{
+    if(lv===5){
+      cardList+=`- ${cd.position}: ${cd.card}\n  Their sentences: ${cd.freeform||'(none)'}\n`;
+    } else {
+      const sents=cd.sentences.map((s,i)=>`Sentence ${i+1}: "${s[0]}" + "${s[1]}"`).join(', ');
+      cardList+=`- ${cd.position}: ${cd.card} | ${sents}\n`;
+    }
+  });
+  let prompt='';
+  if(lv===5){
+    prompt=`You are a tarot reading coach using the Tarot Stories Method. The reader is at Level 5 — freeform. They wrote their own sentences.\n\nSpread: "${selSpread.name}"\nCards:\n${cardList}\n\nRespond with these exact headers:\n\n**What you built:**\nWeave their sentences into one flowing connected reading. Honor their exact words. Don't rewrite — connect.\n\n**What's working:**\nOne sentence on what they did well as a storyteller.\n\n**One question to sit with:**\nOne honest direct question this reading is pointing to.`;
+  } else {
+    prompt=`You are a tarot reading coach using the Tarot Stories Method. The reader is at Level ${lv} — ${lv} sentence(s) per position, 2 keywords each.\n\nSpread: "${selSpread.name}"\nCards and keywords:\n${cardList}\n\nRespond with these exact headers:\n\n**Your story:**\nBuild ${lv} sentence(s) per card position using their keywords. Weave the positions together into a connected narrative. Real human situation, no mystical fluff. Read like a story, not a fortune.\n\n**One question to sit with:**\nOne honest direct question this spread is pointing to. No fluff. Make it land.`;
+  }
+  try{
+    const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":API_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1200,messages:[{role:"user",content:prompt}]})});
+    const data=await r.json();
+    const text=data.content.map(b=>b.text||'').join('');
+    const secDefs=lv===5?[{k:"What you built:",l:"What you built"},{k:"What's working:",l:"What's working"},{k:"One question to sit with:",l:"One question to sit with"}]:[{k:"Your story:",l:"Your story"},{k:"One question to sit with:",l:"One question to sit with"}];
+    let html='<div class="story-wrap">';
+    secDefs.forEach((sec,i)=>{
+      const start=text.indexOf('**'+sec.k+'**');
+      let end=text.length;
+      secDefs.slice(i+1).forEach(ns=>{const idx=text.indexOf('**'+ns.k+'**');if(idx>start&&idx<end)end=idx;});
+      if(start!==-1){
+        const content=text.slice(start+sec.k.length+4,end).trim();
+        html+=`<div class="story-section"><div class="story-section-label">${sec.l}</div><p>${content.replace(/\n/g,'<br>')}</p></div>`;
+      }
+    });
+    if(html==='<div class="story-wrap">') html+=`<div class="story-section"><p>${text.replace(/\n/g,'<br>')}</p></div>`;
+    html+='</div>';
+    out.innerHTML=html;
+  }catch(e){
+    out.innerHTML='<div class="loading">Something went wrong. Try again.</div>';
+  }
+}
+
+document.getElementById('btn-pick-level').addEventListener('click',()=>{renderSpreads();setStep(1);});
+document.getElementById('btn-back-s').addEventListener('click',()=>setStep(0));
+document.getElementById('btn-pick-spread').addEventListener('click',()=>{renderCardInputs();setStep(2);});
+document.getElementById('btn-back-c').addEventListener('click',()=>setStep(1));
+document.getElementById('btn-gen').addEventListener('click',generate);
+document.getElementById('btn-restart').addEventListener('click',()=>{
+  selLevel=null;selSpread=null;
+  document.querySelectorAll('.level-card,.spread-card').forEach(c=>c.classList.remove('selected'));
+  document.getElementById('btn-pick-level').disabled=true;
+  document.getElementById('btn-pick-spread').disabled=true;
+  setStep(0);
+});
+document.getElementById('btn-new').addEventListener('click',()=>{renderCardInputs();setStep(2);});
+
+renderLevels();
+setStep(0);
+</script>
+</body>
+</html>
