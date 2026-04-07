@@ -183,87 +183,134 @@ function renderSpreads(){
   });
 }
 
+let generatedTemplate=null;
+
 function renderCardInputs(){
   const c=document.getElementById('card-inputs');
   c.innerHTML='';
   const lv=selLevel.n;
-  document.getElementById('card-step-sub').textContent=lv===5?'Enter each card and write your own sentences.':'Enter each card and fill in your keywords.';
-  selSpread.positions.forEach((pos,i)=>{
-    const slot=document.createElement('div');
-    slot.className='card-slot';
-    let inner=`<div class="slot-header"><div class="slot-pos">${pos.name}</div><div class="slot-hint">${pos.hint}</div></div>`;
-    inner+=`<div class="card-name-row"><input type="text" id="cn${i}" placeholder="Card name (e.g. The Moon)" /></div>`;
-    if(lv===5){
+  if(lv===5){
+    document.getElementById('card-step-sub').textContent='Pull a card for each position. Use the prompts to write your own sentences.';
+    selSpread.positions.forEach((pos,i)=>{
+      const slot=document.createElement('div');
+      slot.className='card-slot';
+      let inner=`<div class="slot-header"><div class="slot-pos">${pos.name}</div></div>`;
+      inner+=`<div class="card-name-row"><input type="text" id="cn${i}" placeholder="Card name (e.g. The Moon)" /></div>`;
       inner+=`<div class="freeform-row"><textarea id="cf${i}" rows="3" placeholder="Write your sentences about this card..."></textarea></div>`;
-    } else {
-      inner+=`<div class="sentence-rows">`;
-      for(let s=0;s<lv;s++){
-        inner+=`<div><div class="kw-label">Sentence ${s+1}</div><div class="sentence-row"><input type="text" id="kw${i}_${s}_0" placeholder="keyword 1" /><input type="text" id="kw${i}_${s}_1" placeholder="keyword 2" /></div></div>`;
-      }
-      inner+=`</div>`;
-    }
-    if(i<selSpread.positions.length-1) inner+=`<hr class="slot-divider">`;
-    slot.innerHTML=inner;
-    c.appendChild(slot);
-  });
+      if(i<selSpread.positions.length-1) inner+=`<hr class="slot-divider">`;
+      slot.innerHTML=inner;
+      c.appendChild(slot);
+    });
+  } else {
+    document.getElementById('card-step-sub').textContent='First we\'ll generate your story template. Then you fill in the blanks.';
+    const btn=document.createElement('div');
+    btn.className='btn-row';
+    btn.style.justifyContent='flex-start';
+    btn.innerHTML='<button class="btn-primary" id="btn-get-template">Generate my story template</button>';
+    c.appendChild(btn);
+    setTimeout(()=>{
+      const t=document.getElementById('btn-get-template');
+      if(t) t.addEventListener('click',getTemplate);
+    },50);
+  }
+}
+
+async function getTemplate(){
+  const lv=selLevel.n;
+  const c=document.getElementById('card-inputs');
+  c.innerHTML='<div class="loading">Building your template...</div>';
+  const posNames=selSpread.positions.map((p,i)=>`Card ${i+1} — ${p.name}`).join('\n');
+  const prompt=`You are building a Tarot Stories Method fill-in-the-blank story template. This is the Mad Lib method for tarot.\n\nSpread: "${selSpread.name}"\nPositions:\n${posNames}\n\nLevel ${lv}: Write ${lv} sentence(s) per card position.\n\nRules:\n- Use the EXACT position name words in each sentence with minimal connecting words for grammar\n- Each sentence has exactly 2 blanks labeled with the word type\n- First blank is always the main keyword: _______ (noun - Card X), _______ (verb - Card X), or _______ (adjective - Card X)\n- Second blank is always a qualifier — how it makes them feel or a deeper layer: and it makes me feel _______ (adjective - Card X), or and it looks like _______ (noun - Card X)\n- Label every blank with noun, verb, or adjective AND the card number\n- No mystical language. Real human sentences.\n- Vary the word types across positions — don't use all nouns\n- For Level 2+, each additional sentence goes deeper into that position using different word types\n\nFormat your response as just the template sentences, nothing else. No intro, no explanation. Just the sentences with blanks, one position at a time, with the position name as a header.\n\nExample format:\n**Past (Card 1)**\nRight now I am carrying _______ (noun - Card 1) and it is making me feel _______ (adjective - Card 1).\n\n**Present (Card 2)**\nWhat is happening right now is _______ (verb - Card 2) and the energy around it feels _______ (adjective - Card 2).`;
+
+  try{
+    const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":API_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1200,messages:[{role:"user",content:prompt}]})});
+    const data=await r.json();
+    const template=data.content.map(b=>b.text||'').join('').trim();
+    generatedTemplate=template;
+    renderFillInBlanks(template);
+  }catch(e){
+    c.innerHTML='<div class="loading">Something went wrong. Try again.</div>';
+  }
+}
+
+function renderFillInBlanks(template){
+  const c=document.getElementById('card-inputs');
+  c.innerHTML='';
+  document.getElementById('card-step-sub').textContent='Pull your cards. Fill in the blanks using your card keywords.';
+
+  const wrap=document.createElement('div');
+  wrap.className='story-wrap';
+  wrap.style.marginBottom='1rem';
+
+  const sections=template.split(/\*\*(.+?)\*\*/).filter(s=>s.trim());
+  let blankIndex=0;
+  let html='';
+
+  for(let i=0;i<sections.length;i+=2){
+    const heading=sections[i]?sections[i].trim():'';
+    const body=sections[i+1]?sections[i+1].trim():'';
+    if(!body) continue;
+    const rendered=body.replace(/_{3,}/g,()=>{
+      const id=`blank${blankIndex++}`;
+      return `<input type="text" id="${id}" placeholder="___" style="width:120px;font-size:13px;padding:4px 8px;border:none;border-bottom:1.5px solid #b89967;border-radius:0;background:transparent;color:#111111;font-family:Arial,sans-serif;outline:none;" />`;
+    });
+    html+=`<div class="story-section"><div class="story-section-label">${heading}</div><p style="line-height:2.2;">${rendered.replace(/\n/g,'<br>')}</p></div>`;
+  }
+
+  wrap.innerHTML=html||`<div class="story-section"><p style="line-height:2.2;">${template.replace(/_{3,}/g,()=>{const id=`blank${blankIndex++}`;return `<input type="text" id="${id}" placeholder="___" style="width:120px;font-size:13px;padding:4px 8px;border:none;border-bottom:1.5px solid #b89967;border-radius:0;background:transparent;color:#111111;font-family:Arial,sans-serif;outline:none;" />`;}).replace(/\n/g,'<br>')}</p></div>`;
+  c.appendChild(wrap);
+  window._totalBlanks=blankIndex;
 }
 
 async function generate(){
   const lv=selLevel.n;
-  const positions=selSpread.positions;
-  let cardData=[];
-  for(let i=0;i<positions.length;i++){
-    const cardName=document.getElementById('cn'+i).value.trim();
-    if(!cardName) return;
-    const entry={position:positions[i].name,card:cardName};
-    if(lv===5){
-      entry.freeform=document.getElementById('cf'+i).value.trim();
-    } else {
-      entry.sentences=[];
-      for(let s=0;s<lv;s++){
-        entry.sentences.push([document.getElementById(`kw${i}_${s}_0`).value.trim(),document.getElementById(`kw${i}_${s}_1`).value.trim()]);
-      }
-    }
-    cardData.push(entry);
-  }
   setStep(3);
   const out=document.getElementById('story-out');
-  out.innerHTML='<div class="loading">Building your story...</div>';
-  let cardList='';
-  cardData.forEach(cd=>{
-    if(lv===5){
-      cardList+=`- ${cd.position}: ${cd.card}\n  Their sentences: ${cd.freeform||'(none)'}\n`;
-    } else {
-      const sents=cd.sentences.map((s,i)=>`Sentence ${i+1}: "${s[0]}" + "${s[1]}"`).join(', ');
-      cardList+=`- ${cd.position}: ${cd.card} | ${sents}\n`;
-    }
-  });
-  let prompt='';
+  out.innerHTML='<div class="loading">Reading your story...</div>';
+
   if(lv===5){
-    prompt=`You are a tarot reading coach using the Tarot Stories Method. The reader is at Level 5 — freeform. They wrote their own sentences.\n\nSpread: "${selSpread.name}"\nCards:\n${cardList}\n\nRespond with these exact headers:\n\n**What you built:**\nWeave their sentences into one flowing connected reading. Honor their exact words. Don't rewrite — connect.\n\n**What's working:**\nOne sentence on what they did well as a storyteller.\n\n**One question to sit with:**\nOne honest direct question this reading is pointing to.`;
+    const positions=selSpread.positions;
+    let cardData=[];
+    for(let i=0;i<positions.length;i++){
+      cardData.push({position:positions[i].name,card:document.getElementById('cn'+i).value.trim(),freeform:document.getElementById('cf'+i).value.trim()});
+    }
+    const cardList=cardData.map(cd=>`- ${cd.position}: ${cd.card}\n  Their writing: ${cd.freeform||'(none)'}`).join('\n');
+    const STORY_PROMPTS=`THE WANT AND NEED PROMPTS\nWhat do they/you want?\nWhat do they/you actually need?\nWhat are they/you afraid of?\n\nCONFLICT PROMPTS\nWhat's standing in their/your way?\nWhat has to change for this to resolve?\n\nPLOT PROMPTS\nWhat happened just before this moment?\nWhat happens next?\nWhat's the turning point?\n\nTHE REALLY JUICY ONES\nWhat do they/you want the world to think vs what's actually true?\nWhat's the moment everything changed?\n\nTENSION AND STAKES\nWhat do they/you have to lose?\nWhat are they/you willing to sacrifice?\nWhat happens if they/you do nothing?\n\nREVELATION PROMPTS\nWhat don't they/you know yet?\nWhat truth has been hiding in plain sight?\n\nINTERNAL JOURNEY PROMPTS\nWhat do they/you tell themselves/yourself vs what's actually true?\nWhat are they/you pretending not to feel?\nWhat have they/you been waiting for permission to do?`;
+    const prompt=`You are a tarot reading coach using the Tarot Stories Method. The reader is at Level 5 — freeform writing.\n\nSpread: "${selSpread.name}"\nCards and what they wrote:\n${cardList}\n\nUsing storytelling coaching principles, respond with these exact headers:\n\n**What you built:**\nWeave their sentences into one connected reading. Honor their words. Connect — don't rewrite.\n\n**What's working:**\nOne sentence on their strongest storytelling move.\n\n**Go deeper:**\nPick 2 prompts from this list that would push their story further:\n${STORY_PROMPTS}`;
+    try{
+      const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":API_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1200,messages:[{role:"user",content:prompt}]})});
+      const data=await r.json();
+      const text=data.content.map(b=>b.text||'').join('');
+      const secDefs=[{k:"What you built:",l:"What you built"},{k:"What's working:",l:"What's working"},{k:"Go deeper:",l:"Go deeper"}];
+      let html='<div class="story-wrap">';
+      secDefs.forEach((sec,i)=>{
+        const start=text.indexOf('**'+sec.k+'**');
+        let end=text.length;
+        secDefs.slice(i+1).forEach(ns=>{const idx=text.indexOf('**'+ns.k+'**');if(idx>start&&idx<end)end=idx;});
+        if(start!==-1){const content=text.slice(start+sec.k.length+4,end).trim();html+=`<div class="story-section"><div class="story-section-label">${sec.l}</div><p>${content.replace(/\n/g,'<br>')}</p></div>`;}
+      });
+      html+='</div>';
+      out.innerHTML=html;
+    }catch(e){out.innerHTML='<div class="loading">Something went wrong. Try again.</div>';}
   } else {
-    prompt=`You are a tarot reading coach using the Tarot Stories Method. The reader is at Level ${lv} — ${lv} sentence(s) per position, 2 keywords each.\n\nSpread: "${selSpread.name}"\nCards and keywords:\n${cardList}\n\nRespond with these exact headers:\n\n**Your story:**\nBuild ${lv} sentence(s) per card position using their keywords. Weave the positions together into a connected narrative. Real human situation, no mystical fluff. Read like a story, not a fortune.\n\n**One question to sit with:**\nOne honest direct question this spread is pointing to. No fluff. Make it land.`;
-  }
-  try{
-    const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":API_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1200,messages:[{role:"user",content:prompt}]})});
-    const data=await r.json();
-    const text=data.content.map(b=>b.text||'').join('');
-    const secDefs=lv===5?[{k:"What you built:",l:"What you built"},{k:"What's working:",l:"What's working"},{k:"One question to sit with:",l:"One question to sit with"}]:[{k:"Your story:",l:"Your story"},{k:"One question to sit with:",l:"One question to sit with"}];
+    const blanks=[];
+    for(let i=0;i<(window._totalBlanks||0);i++){
+      const el=document.getElementById('blank'+i);
+      blanks.push(el?el.value.trim():'');
+    }
+    let filled=generatedTemplate||'';
+    blanks.forEach(val=>{filled=filled.replace(/_{3,}/,val||'_____');});
+    const sections=filled.split(/\*\*(.+?)\*\*/).filter(s=>s.trim());
     let html='<div class="story-wrap">';
-    secDefs.forEach((sec,i)=>{
-      const start=text.indexOf('**'+sec.k+'**');
-      let end=text.length;
-      secDefs.slice(i+1).forEach(ns=>{const idx=text.indexOf('**'+ns.k+'**');if(idx>start&&idx<end)end=idx;});
-      if(start!==-1){
-        const content=text.slice(start+sec.k.length+4,end).trim();
-        html+=`<div class="story-section"><div class="story-section-label">${sec.l}</div><p>${content.replace(/\n/g,'<br>')}</p></div>`;
-      }
-    });
-    if(html==='<div class="story-wrap">') html+=`<div class="story-section"><p>${text.replace(/\n/g,'<br>')}</p></div>`;
+    for(let i=0;i<sections.length;i+=2){
+      const heading=sections[i]?sections[i].trim():'';
+      const body=sections[i+1]?sections[i+1].trim():'';
+      if(!body) continue;
+      html+=`<div class="story-section"><div class="story-section-label">${heading}</div><p style="line-height:1.9;">${body.replace(/\n/g,'<br>')}</p></div>`;
+    }
+    if(html==='<div class="story-wrap">') html+=`<div class="story-section"><p style="line-height:1.9;">${filled.replace(/\n/g,'<br>')}</p></div>`;
     html+='</div>';
     out.innerHTML=html;
-  }catch(e){
-    out.innerHTML='<div class="loading">Something went wrong. Try again.</div>';
   }
 }
 
