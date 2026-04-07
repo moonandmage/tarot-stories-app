@@ -23,7 +23,7 @@ body{background:#ffffff;color:#111111;font-family:Georgia,'Times New Roman',seri
 .spread-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1.5rem;}
 .spread-card{border:0.5px solid #e0d9d0;border-radius:12px;padding:1rem 1.25rem;cursor:pointer;background:#ffffff;transition:border-color 0.15s;}
 .spread-card:hover{border-color:#b89967;}
-.spread-level{font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:#b89967;margin-bottom:4px;font-family:Arial,sans-serif;}
+.spread-level-badge{font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:#b89967;margin-bottom:4px;font-family:Arial,sans-serif;}
 .spread-name{font-size:15px;font-weight:500;margin-bottom:4px;color:#111111;}
 .spread-desc{font-size:13px;color:#888888;line-height:1.5;font-family:Arial,sans-serif;}
 .spread-count{display:inline-block;margin-top:8px;font-size:12px;color:#aaaaaa;font-family:Arial,sans-serif;}
@@ -33,11 +33,13 @@ body{background:#ffffff;color:#111111;font-family:Georgia,'Times New Roman',seri
 .card-input:focus{outline:none;border-color:#b89967;}
 .freeform-ta{width:100%;font-size:14px;padding:9px 12px;border:0.5px solid #e0d9d0;border-radius:8px;background:#ffffff;color:#111111;font-family:Arial,sans-serif;resize:none;line-height:1.6;display:block;}
 .freeform-ta:focus{outline:none;border-color:#b89967;}
-.btn-row{display:flex;gap:10px;justify-content:flex-end;margin-top:1.5rem;}
+.btn-row{display:flex;gap:10px;justify-content:flex-end;margin-top:1.5rem;flex-wrap:wrap;}
 .btn-primary{font-size:13px;padding:10px 22px;background:#b89967;color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:Arial,sans-serif;letter-spacing:0.06em;}
 .btn-primary:hover{background:#a0834f;}
 .btn-ghost{font-size:13px;padding:10px 18px;background:transparent;color:#888888;border:0.5px solid #e0d9d0;border-radius:8px;cursor:pointer;font-family:Arial,sans-serif;}
 .btn-ghost:hover{border-color:#b89967;color:#111111;}
+.btn-small{font-size:12px;padding:7px 14px;background:transparent;color:#b89967;border:0.5px solid #b89967;border-radius:8px;cursor:pointer;font-family:Arial,sans-serif;}
+.btn-small:hover{background:#b89967;color:#fff;}
 .loading{text-align:center;padding:2rem 0;color:#888888;font-family:Arial,sans-serif;font-size:14px;}
 .story-wrap{border:0.5px solid #e0d9d0;border-radius:12px;overflow:hidden;margin-bottom:1.5rem;}
 .story-section{padding:1.25rem 1.5rem;border-bottom:0.5px solid #e0d9d0;}
@@ -47,8 +49,26 @@ body{background:#ffffff;color:#111111;font-family:Georgia,'Times New Roman',seri
 .blank-input{width:130px;font-size:13px;padding:3px 6px;border:none;border-bottom:1.5px solid #b89967;background:transparent;color:#111111;font-family:Arial,sans-serif;outline:none;}
 .step-label{font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:#b89967;margin-bottom:8px;font-family:Arial,sans-serif;}
 h2{font-size:20px;font-weight:500;margin-bottom:6px;color:#111111;}
-.sub{font-size:14px;color:#888888;margin-bottom:1.5rem;font-family:Arial,sans-serif;line-height:1.6;}
+.sub{font-size:14px;color:#888888;margin-bottom:1rem;font-family:Arial,sans-serif;line-height:1.6;}
+.note-box{background:#f9f7f4;border:0.5px solid #e0d9d0;border-radius:8px;padding:1rem 1.25rem;margin-bottom:1.5rem;font-family:Arial,sans-serif;font-size:13px;color:#555555;line-height:1.7;}
+.note-box strong{color:#111111;font-weight:500;}
+.toggle-row{display:flex;align-items:center;gap:10px;margin-bottom:1.5rem;font-family:Arial,sans-serif;font-size:13px;color:#888888;}
+.toggle{position:relative;width:36px;height:20px;cursor:pointer;}
+.toggle input{opacity:0;width:0;height:0;}
+.toggle-slider{position:absolute;inset:0;background:#e0d9d0;border-radius:20px;transition:0.2s;}
+.toggle-slider:before{content:'';position:absolute;width:16px;height:16px;left:2px;bottom:2px;background:#fff;border-radius:50%;transition:0.2s;}
+input:checked+.toggle-slider{background:#b89967;}
+input:checked+.toggle-slider:before{transform:translateX(16px);}
 .err{color:#c0392b;font-family:Arial,sans-serif;font-size:13px;padding:1rem 0;}
+.feedback-section{background:#f9f7f4;border-radius:12px;padding:1.25rem 1.5rem;margin-bottom:1.5rem;}
+.reflect-section{border:0.5px solid #b89967;border-radius:12px;padding:1.25rem 1.5rem;margin-bottom:1.5rem;}
+.reflect-q{font-size:14px;font-family:Arial,sans-serif;color:#111111;margin-bottom:0.75rem;line-height:1.6;}
+.prompt-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:1rem;}
+.prompt-pill{font-size:12px;font-family:Arial,sans-serif;padding:6px 12px;border:0.5px solid #e0d9d0;border-radius:20px;cursor:pointer;color:#555555;background:#fff;text-align:center;}
+.prompt-pill:hover{border-color:#b89967;color:#b89967;}
+.import-box{border:0.5px solid #e0d9d0;border-radius:12px;padding:1.25rem;margin-bottom:1rem;}
+.pos-row{display:flex;gap:8px;align-items:center;margin-bottom:8px;}
+.pos-num{font-size:13px;color:#b89967;font-family:Arial,sans-serif;width:20px;flex-shrink:0;}
 </style>
 </head>
 <body>
@@ -66,17 +86,35 @@ const LEVELS=[
   {n:2,name:"Level 2",desc:"2 sentences per card. 2 keywords each. Finding your rhythm."},
   {n:3,name:"Level 3",desc:"3 sentences per card. 2 keywords each. Building confidence."},
   {n:4,name:"Level 4",desc:"4 sentences per card. 2 keywords each. Getting deep."},
-  {n:5,name:"Level 5",desc:"Freeform. You write your own sentences. No hand-holding."}
+  {n:5,name:"Level 5 — Freeform",desc:"Create your own spread. Write your own story. No hand-holding."}
 ];
 const SPREADS=[
-  {id:"ppf",name:"Past, Present, Future",level:"Beginner",desc:"Three cards. One clear storyline.",positions:["Past","Present","Future"]},
-  {id:"sao",name:"Situation, Action, Outcome",level:"Beginner",desc:"What's happening, what to do, where it leads.",positions:["Situation","Action","Outcome"]},
-  {id:"mbs",name:"Mind, Body, Spirit",level:"Intermediate",desc:"A fuller picture of where you are right now.",positions:["Mind","Body","Spirit","Integration","Message"]},
-  {id:"bgp",name:"Block, Gift, Path",level:"Intermediate",desc:"What's in the way, what you have, how to move.",positions:["The Block","Hidden Gift","The Path","Next Step"]},
-  {id:"sc",name:"The Story Cross",level:"Advanced",desc:"Six cards. Full narrative from root to resolution.",positions:["Root Cause","Crossing Energy","Foundation","Recent Past","Possible Future","Resolution"]},
-  {id:"sl",name:"Shadow & Light",level:"Advanced",desc:"What you're avoiding and what's trying to emerge.",positions:["The Shadow","The Wound","The Gift Inside It","What Light Looks Like","The Integration","Your Next Move"]}
+  {id:"ppf",name:"Past, Present, Future",level:"Beginner",theme:"General",desc:"Three cards. One clear storyline.",positions:["Past","Present","Future"]},
+  {id:"sao",name:"Situation, Action, Outcome",level:"Beginner",theme:"General",desc:"What's happening, what to do, where it leads.",positions:["Situation","Action","Outcome"]},
+  {id:"mbs",name:"Mind, Body, Spirit",level:"Intermediate",theme:"Personal Growth",desc:"A fuller picture of where you are right now.",positions:["Mind","Body","Spirit","Integration","Message"]},
+  {id:"bgp",name:"Block, Gift, Path",level:"Intermediate",theme:"Personal Growth",desc:"What's in the way, what you have, how to move.",positions:["The Block","Hidden Gift","The Path","Next Step"]},
+  {id:"sc",name:"The Story Cross",level:"Advanced",theme:"General",desc:"Six cards. Full narrative from root to resolution.",positions:["Root Cause","Crossing Energy","Foundation","Recent Past","Possible Future","Resolution"]},
+  {id:"sl",name:"Shadow & Light",level:"Advanced",theme:"Shadow Work",desc:"What you're avoiding and what's trying to emerge.",positions:["The Shadow","The Wound","The Gift Inside It","What Light Looks Like","The Integration","Your Next Move"]}
 ];
-let selLevel=null,selSpread=null,tmpl='',blanks=0;
+const STORY_PROMPTS=[
+  "What do you want vs what do you actually need?",
+  "What's standing in your way?",
+  "What happens if you do nothing?",
+  "What don't you know yet?",
+  "What are you pretending not to feel?",
+  "What have you been waiting for permission to do?",
+  "What would you do if you weren't afraid?",
+  "What do you need to stop trying to control?",
+  "What is trying to find you that you keep blocking?",
+  "What are you getting out of staying stuck?",
+  "What hurt you that you never talked about?",
+  "Who are you becoming because of this?",
+  "What do you want so badly you're afraid to say it?",
+  "What would make everything feel worth it?",
+  "What are you capable of that scares you?"
+];
+
+let selLevel=null,selSpread=null,tmpl='',blanks=0,showHints=true;
 
 function prog(step,total){
   const b=document.getElementById('prog');b.innerHTML='';
@@ -85,24 +123,33 @@ function prog(step,total){
 function S(html){document.getElementById('screen').innerHTML=html;}
 function $(id){return document.getElementById(id);}
 
+function grammarNote(){
+  return `<div class="note-box"><strong>Quick reminder:</strong> Noun = a person, place, or thing. &nbsp;Adjective = a describing word. &nbsp;Verb = an action word.</div>`;
+}
+
+function questionNote(){
+  return `<div class="note-box" style="margin-bottom:1rem;"><strong>How to get a good reading:</strong> The more specific your question or intention, the more your cards have to work with. Instead of "what's happening in my life," try "what do I need to know about this decision?" or "what's blocking me right now?"</div>`;
+}
+
 function levelScreen(){
   prog(1,4);
-  S(`<div class="step-label">Step 1 of 4</div><h2>Choose your level</h2><p class="sub">Be honest with yourself. You can always level up.</p><div class="level-grid">${LEVELS.map(lv=>`<div class="level-card" id="lc${lv.n}" onclick="pickLevel(${lv.n})"><div class="level-num">${lv.n}</div><div><div class="level-name">${lv.name}</div><div class="level-desc">${lv.desc}</div></div></div>`).join('')}</div>`);
+  const importBtn=`<div style="margin-top:1.5rem;text-align:center;"><button class="btn-ghost" onclick="importScreen()" style="font-size:13px;">Import a spread I found</button></div>`;
+  S(`<div class="step-label">Step 1 of 4</div><h2>Choose your level</h2><p class="sub">Be honest with yourself. You can always level up.</p><div class="level-grid">${LEVELS.map(lv=>`<div class="level-card" onclick="pickLevel(${lv.n})"><div class="level-num">${lv.n===5?'5':lv.n}</div><div><div class="level-name">${lv.name}</div><div class="level-desc">${lv.desc}</div></div></div>`).join('')}</div>${importBtn}`);
 }
 
 function pickLevel(n){
   selLevel=LEVELS.find(l=>l.n===n);
-  spreadScreen();
+  n===5?freeformBuildScreen():spreadScreen();
 }
 
 function spreadScreen(){
   prog(2,4);
-  S(`<div class="step-label">Step 2 of 4</div><h2>Choose your spread</h2><p class="sub">Start where you are. You can always go deeper.</p><div class="spread-grid">${SPREADS.map(sp=>`<div class="spread-card" onclick="pickSpread('${sp.id}')"><div class="spread-level">${sp.level}</div><div class="spread-name">${sp.name}</div><div class="spread-desc">${sp.desc}</div><span class="spread-count">${sp.positions.length} cards</span></div>`).join('')}</div><div class="btn-row"><button class="btn-ghost" onclick="levelScreen()">Back</button></div>`);
+  S(`<div class="step-label">Step 2 of 4</div><h2>Choose your spread</h2><p class="sub">Start where you are. You can always go deeper.</p>${questionNote()}<div class="spread-grid">${SPREADS.map(sp=>`<div class="spread-card" onclick="pickSpread('${sp.id}')"><div class="spread-level-badge">${sp.level} &middot; ${sp.theme}</div><div class="spread-name">${sp.name}</div><div class="spread-desc">${sp.desc}</div><span class="spread-count">${sp.positions.length} cards</span></div>`).join('')}</div><div class="btn-row"><button class="btn-ghost" onclick="levelScreen()">Back</button></div>`);
 }
 
 function pickSpread(id){
   selSpread=SPREADS.find(s=>s.id===id);
-  selLevel.n===5?freeformScreen():templateScreen();
+  templateScreen();
 }
 
 function templateScreen(){
@@ -132,15 +179,134 @@ function fillScreen(){
   for(let i=1;i<secs.length;i+=2){
     const heading=secs[i].trim();
     const body=(secs[i+1]||'').trim();
-    const rendered=body.replace(/_______/g,()=>`<input class="blank-input" type="text" id="b${blanks++}" placeholder="___" />`);
+    let rendered=body;
+    if(showHints){
+      rendered=body.replace(/_______/g,()=>`<input class="blank-input" type="text" id="b${blanks++}" placeholder="___" />`);
+    } else {
+      rendered=body.replace(/ \([^)]+- Card \d+\)/g,'').replace(/_______/g,()=>`<input class="blank-input" type="text" id="b${blanks++}" placeholder="___" />`);
+    }
     html+=`<div class="story-section"><div class="story-section-label">${heading}</div><p style="line-height:2.6;">${rendered.replace(/\n/g,'<br>')}</p></div>`;
   }
   if(blanks===0)html+=`<div class="story-section"><p style="font-family:Arial,sans-serif;font-size:14px;line-height:1.8;">${tmpl.replace(/\n/g,'<br>')}</p></div>`;
   html+='</div>';
-  S(`<div class="step-label">Step 3 of 4</div><h2>Fill in the blanks</h2><p class="sub">Pull your cards. Use your card keywords to fill in each blank.</p>${html}<div class="btn-row"><button class="btn-ghost" onclick="spreadScreen()">Back</button><button class="btn-primary" onclick="storyScreen()">See my reading</button></div>`);
+
+  const hintsToggle=`<div class="toggle-row"><label class="toggle"><input type="checkbox" id="hints-toggle" ${showHints?'checked':''} onchange="toggleHints()"><span class="toggle-slider"></span></label><span>Show word type hints (noun, verb, adjective)</span></div>`;
+  const grammarN=selLevel.n<=2?grammarNote():'';
+
+  S(`<div class="step-label">Step 3 of 4</div><h2>Fill in the blanks</h2><p class="sub">Pull 3 cards from your deck. Use your Tarot Stories Method Keyword Cheatsheet to help you fill in the blanks or trust your intuitive hits.</p><p class="sub" style="margin-top:-0.5rem;">You'll need to use your creativity and intuition to fill in the story. You may need to add additional words besides the keywords in order for the story to make sense.</p>${grammarN}${hintsToggle}${html}<div class="btn-row"><button class="btn-ghost" onclick="spreadScreen()">Back</button><button class="btn-primary" onclick="storyScreen()">See my reading</button></div>`);
 }
 
-function storyScreen(){
+function toggleHints(){
+  showHints=$('hints-toggle').checked;
+  fillScreen();
+}
+
+async function storyScreen(){
+  prog(4,4);
+  let filled=tmpl;
+  for(let i=0;i<blanks;i++){const el=$('b'+i);filled=filled.replace('_______',el?el.value.trim()||'_____':'_____');}
+  if(!showHints){filled=filled.replace(/ \([^)]+- Card \d+\)/g,'');}
+  const secs=filled.split(/\*\*([^*]+)\*\*/);
+  let readingHtml='<div class="story-wrap">';
+  for(let i=1;i<secs.length;i+=2){
+    const heading=secs[i].trim();
+    const body=(secs[i+1]||'').trim();
+    readingHtml+=`<div class="story-section"><div class="story-section-label">${heading}</div><p style="line-height:1.9;">${body.replace(/\n/g,'<br>')}</p></div>`;
+  }
+  if(secs.length<=1)readingHtml+=`<div class="story-section"><p style="line-height:1.9;font-family:Arial,sans-serif;">${filled.replace(/\n/g,'<br>')}</p></div>`;
+  readingHtml+='</div>';
+
+  S(`<div class="step-label">Step 4 of 4</div><h2>Your reading</h2><p class="sub">Read this out loud. All of it.</p>${readingHtml}<div class="loading" id="fb">Getting your feedback...</div><div class="btn-row" id="action-row"><button class="btn-ghost" onclick="fillScreen()">Back</button><button class="btn-ghost" onclick="copyReading()">Copy reading</button><button class="btn-primary" onclick="levelScreen()">New reading</button></div>`);
+
+  await getFeedback(filled);
+}
+
+async function getFeedback(filledStory){
+  const lv=selLevel.n;
+  const prompt=`You are a Tarot Stories Method coach. A student just completed a fill-in-the-blank tarot reading.\n\nSpread: "${selSpread.name}"\nLevel: ${lv}\n\nTheir completed reading:\n${filledStory}\n\nRespond with these exact bold headers:\n\n**What's working:**\nOne sentence on the strongest storytelling element in their reading. Be specific.\n\n**One question to sit with:**\nOne honest direct question this reading is pointing to. No fluff.${lv<=2?'\n\n**How did that feel?**\nAsk them: How did that feel to read back to yourself? What surprised you? What would you change? Remind them the reading is not set in stone — they can always adjust it.':''}`;
+  try{
+    const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:600,messages:[{role:'user',content:prompt}]})});
+    if(!r.ok){const fb=$('fb');if(fb)fb.innerHTML='';return;}
+    const data=await r.json();
+    if(!data.content){const fb=$('fb');if(fb)fb.innerHTML='';return;}
+    const text=data.content.map(b=>b.text||'').join('');
+    const secDefs=lv<=2?[{k:"What's working:",l:"What's working"},{k:"One question to sit with:",l:"One question to sit with"},{k:"How did that feel?",l:"How did that feel?"}]:[{k:"What's working:",l:"What's working"},{k:"One question to sit with:",l:"One question to sit with"}];
+    let html='<div class="feedback-section">';
+    secDefs.forEach((sec,i)=>{
+      const start=text.indexOf('**'+sec.k+'**');let end=text.length;
+      secDefs.slice(i+1).forEach(ns=>{const idx=text.indexOf('**'+ns.k+'**');if(idx>start&&idx<end)end=idx;});
+      if(start!==-1){const content=text.slice(start+sec.k.length+4,end).trim();html+=`<div style="margin-bottom:1rem;"><div class="story-section-label">${sec.l}</div><p style="font-size:14px;line-height:1.7;font-family:Arial,sans-serif;color:#111111;">${content.replace(/\n/g,'<br>')}</p></div>`;}
+    });
+    html+='</div>';
+    const fb=$('fb');if(fb)fb.outerHTML=html;
+  }catch(e){const fb=$('fb');if(fb)fb.innerHTML='';}
+}
+
+function copyReading(){
+  let filled=tmpl;
+  for(let i=0;i<blanks;i++){const el=$('b'+i);if(el)filled=filled.replace('_______',el.value.trim()||'_____');}
+  filled=filled.replace(/\*\*/g,'').replace(/ \([^)]+- Card \d+\)/g,'');
+  navigator.clipboard.writeText(filled).then(()=>{
+    const btn=document.querySelector('[onclick="copyReading()"]');
+    if(btn){btn.textContent='Copied!';setTimeout(()=>{btn.textContent='Copy reading';},2000);}
+  });
+}
+
+function freeformBuildScreen(){
+  prog(2,4);
+  let posRows='';
+  for(let i=0;i<6;i++){
+    posRows+=`<div class="pos-row"><span class="pos-num">${i+1}</span><input class="card-input" type="text" id="pos${i}" placeholder="Position name (e.g. What I'm hiding)" style="margin-bottom:0;" /></div>`;
+  }
+  S(`<div class="step-label">Step 2 of 4</div><h2>Build your spread</h2><p class="sub">Name your spread positions. Use as many as you need (up to 6). Leave the rest blank.</p>${questionNote()}<div class="import-box">${posRows}</div><div class="btn-row"><button class="btn-ghost" onclick="levelScreen()">Back</button><button class="btn-primary" onclick="freeformWriteScreen()">Next</button></div>`);
+}
+
+function freeformWriteScreen(){
+  const positions=[];
+  for(let i=0;i<6;i++){const v=$('pos'+i).value.trim();if(v)positions.push(v);}
+  if(positions.length===0){alert('Add at least one position name.');return;}
+  selSpread={id:'custom',name:'My Custom Spread',level:'Level 5',positions};
+  prog(3,4);
+
+  const slots=positions.map((pos,i)=>`
+    <div style="margin-bottom:1.5rem;">
+      <div class="slot-pos">${pos}</div>
+      <p style="font-size:12px;color:#b89967;font-family:Arial,sans-serif;margin-bottom:8px;">Write your fill-in-the-blank sentence. Use _______ where you want a blank.</p>
+      <textarea class="freeform-ta" id="fs${i}" rows="2" placeholder='e.g. What I am hiding is _______ and it makes me feel _______.  '></textarea>
+    </div>
+    ${i<positions.length-1?'<hr class="slot-divider">':''}
+  `).join('');
+
+  const promptSection=`<div style="margin-bottom:1.5rem;"><button class="btn-small" onclick="togglePrompts()">Story Prompt Library</button><div id="prompts-box" style="display:none;margin-top:1rem;"><div class="prompt-grid">${STORY_PROMPTS.map(p=>`<div class="prompt-pill" onclick="copyPrompt('${p.replace(/'/g,"\\'")}')">📋 ${p}</div>`).join('')}</div><p style="font-size:12px;color:#aaaaaa;font-family:Arial,sans-serif;margin-top:8px;">Click any prompt to copy it.</p></div></div>`;
+
+  S(`<div class="step-label">Step 3 of 4</div><h2>Write your story</h2><p class="sub">Write your own fill-in-the-blank sentences for each position. Use _______ where you want a blank. Then you'll pull cards to fill them in.</p>${promptSection}${slots}<div class="btn-row"><button class="btn-ghost" onclick="freeformBuildScreen()">Back</button><button class="btn-primary" onclick="freeformFillScreen()">Pull my cards</button></div>`);
+}
+
+function togglePrompts(){
+  const box=$('prompts-box');
+  box.style.display=box.style.display==='none'?'block':'none';
+}
+
+function copyPrompt(text){
+  navigator.clipboard.writeText(text).then(()=>alert('Prompt copied! Paste it into your sentence.'));
+}
+
+function freeformFillScreen(){
+  const positions=selSpread.positions;
+  const sentences=positions.map((pos,i)=>({pos,sentence:$('fs'+i).value.trim()||`${pos} is _______ and it makes me feel _______.`}));
+  blanks=0;
+  let html='<div class="story-wrap">';
+  sentences.forEach(({pos,sentence},i)=>{
+    const rendered=sentence.replace(/_______/g,()=>`<input class="blank-input" type="text" id="b${blanks++}" placeholder="___" />`);
+    html+=`<div class="story-section"><div class="story-section-label">${pos}</div><p style="line-height:2.6;">${rendered}</p></div>`;
+  });
+  html+='</div>';
+  tmpl=sentences.map(({pos,sentence})=>`**${pos}**\n${sentence}`).join('\n\n');
+
+  S(`<div class="step-label">Step 3 of 4</div><h2>Fill in the blanks</h2><p class="sub">Pull your cards. Use your keywords or your intuition to fill in each blank.</p>${grammarNote()}${html}<div class="btn-row"><button class="btn-ghost" onclick="freeformWriteScreen()">Back</button><button class="btn-primary" onclick="freeformStoryScreen()">See my reading</button></div>`);
+}
+
+async function freeformStoryScreen(){
   prog(4,4);
   let filled=tmpl;
   for(let i=0;i<blanks;i++){const el=$('b'+i);filled=filled.replace('_______',el?el.value.trim()||'_____':'_____');}
@@ -151,39 +317,42 @@ function storyScreen(){
     const body=(secs[i+1]||'').trim();
     html+=`<div class="story-section"><div class="story-section-label">${heading}</div><p style="line-height:1.9;">${body.replace(/\n/g,'<br>')}</p></div>`;
   }
-  if(secs.length<=1)html+=`<div class="story-section"><p style="line-height:1.9;font-family:Arial,sans-serif;">${filled.replace(/\n/g,'<br>')}</p></div>`;
   html+='</div>';
-  S(`<div class="step-label">Step 4 of 4</div><h2>Your reading</h2><p class="sub">Read this out loud. All of it.</p>${html}<div class="btn-row"><button class="btn-ghost" onclick="fillScreen()">Back</button><button class="btn-primary" onclick="levelScreen()">New reading</button></div>`);
+
+  const downloadBtn=`<button class="btn-ghost" onclick="downloadReading()">Download as text</button>`;
+
+  S(`<div class="step-label">Step 4 of 4</div><h2>Your reading</h2><p class="sub">Read this out loud. All of it.</p>${html}<div class="btn-row"><button class="btn-ghost" onclick="freeformFillScreen()">Back</button>${downloadBtn}<button class="btn-ghost" onclick="copyReading()">Copy reading</button><button class="btn-primary" onclick="levelScreen()">New reading</button></div>`);
+
+  window._currentReading=filled.replace(/\*\*/g,'');
 }
 
-function freeformScreen(){
-  prog(3,4);
-  const slots=selSpread.positions.map((pos,i)=>`<div class="card-slot"><div class="slot-pos">${pos} — Card ${i+1}</div><input class="card-input" type="text" id="cn${i}" placeholder="Card name (e.g. The Moon)" /><textarea class="freeform-ta" id="cf${i}" rows="3" placeholder="Write your sentences about this card..."></textarea></div>${i<selSpread.positions.length-1?'<hr class="slot-divider">':''}`).join('');
-  S(`<div class="step-label">Step 3 of 4</div><h2>Pull your cards</h2><p class="sub">Write your own sentences for each position. Use the spread as your guide.</p>${slots}<div class="btn-row"><button class="btn-ghost" onclick="spreadScreen()">Back</button><button class="btn-primary" onclick="submitFreeform()">Build my story</button></div>`);
+function downloadReading(){
+  const text=window._currentReading||'';
+  const blob=new Blob([text],{type:'text/plain'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='my-tarot-reading.txt';
+  a.click();
 }
 
-async function submitFreeform(){
-  const cardData=selSpread.positions.map((pos,i)=>({position:pos,card:$('cn'+i).value.trim(),writing:$('cf'+i).value.trim()}));
-  prog(4,4);
-  S(`<div class="step-label">Step 4 of 4</div><h2>Your reading</h2><p class="sub">Read this out loud. All of it.</p><div class="loading" id="sa">Building your reading...</div><div class="btn-row"><button class="btn-ghost" onclick="freeformScreen()">Back</button><button class="btn-primary" onclick="levelScreen()">New reading</button></div>`);
-  const cardList=cardData.map(cd=>`- ${cd.position}: ${cd.card||'(no card)'}\n  Their writing: ${cd.writing||'(none)'}`).join('\n');
-  const prompt=`You are a tarot reading coach using the Tarot Stories Method. The reader is at Level 5 — freeform.\n\nSpread: "${selSpread.name}"\nCards and what they wrote:\n${cardList}\n\nRespond with these exact bold headers:\n\n**What you built:**\nWeave their sentences into one connected reading. Honor their words. Connect — don't rewrite.\n\n**What's working:**\nOne sentence on their strongest storytelling move.\n\n**Go deeper:**\nPick 2 questions from this list that would push their story further:\n- What do you want vs what do you actually need?\n- What's standing in your way?\n- What happens if you do nothing?\n- What don't you know yet?\n- What are you pretending not to feel?\n- What have you been waiting for permission to do?\n- What would you do if you weren't afraid?\n- What do you need to stop trying to control?`;
-  try{
-    const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1200,messages:[{role:'user',content:prompt}]})});
-    if(!r.ok){const e=await r.text();const sa=$('sa');if(sa)sa.innerHTML=`<p class="err">API error ${r.status}: ${e}</p>`;return;}
-    const data=await r.json();
-    if(!data.content){const sa=$('sa');if(sa)sa.innerHTML=`<p class="err">No content: ${JSON.stringify(data)}</p>`;return;}
-    const text=data.content.map(b=>b.text||'').join('');
-    const secDefs=[{k:'What you built:',l:'What you built'},{k:"What's working:",l:"What's working"},{k:'Go deeper:',l:'Go deeper'}];
-    let html='<div class="story-wrap">';
-    secDefs.forEach((sec,i)=>{
-      const start=text.indexOf('**'+sec.k+'**');let end=text.length;
-      secDefs.slice(i+1).forEach(ns=>{const idx=text.indexOf('**'+ns.k+'**');if(idx>start&&idx<end)end=idx;});
-      if(start!==-1){const content=text.slice(start+sec.k.length+4,end).trim();html+=`<div class="story-section"><div class="story-section-label">${sec.l}</div><p>${content.replace(/\n/g,'<br>')}</p></div>`;}
-    });
-    html+='</div>';
-    const sa=$('sa');if(sa)sa.outerHTML=html;
-  }catch(e){const sa=$('sa');if(sa)sa.innerHTML=`<p class="err">Error: ${e.message}</p>`;}
+function importScreen(){
+  prog(1,4);
+  let posRows='';
+  for(let i=0;i<8;i++){
+    posRows+=`<div class="pos-row"><span class="pos-num">${i+1}</span><input class="card-input" type="text" id="imp${i}" placeholder="Position name" style="margin-bottom:0;" /></div>`;
+  }
+  const sentOptions=[1,2,3,4].map(n=>`<option value="${n}">${n} sentence${n>1?'s':''} per position</option>`).join('');
+  S(`<div class="step-label">Import a Spread</div><h2>Import a spread</h2><p class="sub">Found a spread you love? Paste the position names below and we'll turn it into a Tarot Stories template.</p><div class="import-box">${posRows}</div><div style="margin-bottom:1.5rem;"><select id="imp-sents" style="font-size:14px;padding:9px 12px;border:0.5px solid #e0d9d0;border-radius:8px;background:#fff;color:#111111;font-family:Arial,sans-serif;width:100%;">${sentOptions}</select></div><div class="btn-row"><button class="btn-ghost" onclick="levelScreen()">Back</button><button class="btn-primary" onclick="importBuild()">Build my template</button></div>`);
+}
+
+async function importBuild(){
+  const positions=[];
+  for(let i=0;i<8;i++){const v=$('imp'+i).value.trim();if(v)positions.push(v);}
+  if(positions.length===0){alert('Add at least one position name.');return;}
+  const sentsPerPos=parseInt($('imp-sents').value)||1;
+  selSpread={id:'imported',name:'Imported Spread',level:'Custom',positions};
+  selLevel={n:sentsPerPos,name:`${sentsPerPos} sentence${sentsPerPos>1?'s':''} per position`};
+  templateScreen();
 }
 
 levelScreen();
