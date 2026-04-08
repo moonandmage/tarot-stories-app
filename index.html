@@ -28,7 +28,6 @@ body{background:#ffffff;color:#111111;font-family:Georgia,'Times New Roman',seri
 .spread-list{display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:1.5rem;}
 .spread-card{border:0.5px solid #e0d9d0;border-radius:12px;padding:1rem 1.25rem;cursor:pointer;background:#ffffff;transition:border-color 0.15s;}
 .spread-card:hover{border-color:#b89967;}
-.spread-badge{font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:#b89967;margin-bottom:4px;font-family:Arial,sans-serif;}
 .spread-name{font-size:15px;font-weight:500;margin-bottom:4px;color:#111111;}
 .spread-desc{font-size:13px;color:#888888;line-height:1.5;font-family:Arial,sans-serif;}
 .spread-count{display:inline-block;margin-top:6px;font-size:12px;color:#aaaaaa;font-family:Arial,sans-serif;}
@@ -72,7 +71,7 @@ input:checked+.toggle-slider:before{transform:translateX(16px);}
 .prompt-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:1rem;}
 .prompt-pill{font-size:12px;font-family:Arial,sans-serif;padding:6px 10px;border:0.5px solid #e0d9d0;border-radius:20px;cursor:pointer;color:#555555;background:#fff;text-align:left;line-height:1.4;}
 .prompt-pill:hover{border-color:#b89967;color:#b89967;}
-.l5-prompt{font-size:22px;font-weight:500;color:#111111;padding:1rem 0 0.25rem;border-bottom:0.5px solid #e0d9d0;margin-bottom:1rem;}
+.l5-prompt{font-size:22px;font-weight:500;color:#111111;padding:1rem 0 0.25rem;}
 .l5-hint{font-size:12px;color:#b89967;font-family:Arial,sans-serif;margin-bottom:0.75rem;}
 </style>
 </head>
@@ -92,9 +91,9 @@ const SPREADS=[
   {id:"mbs",name:"Mind, Body, Spirit",theme:"Personal Growth",desc:"A fuller picture of where you are right now.",positions:["Mind","Body","Spirit","Integration","Message"]},
   {id:"bgp",name:"Block, Gift, Path",theme:"Personal Growth",desc:"What's in the way, what you have, how to move.",positions:["The Block","Hidden Gift","The Path","Next Step"]},
   {id:"sc",name:"The Story Cross",theme:"General",desc:"Six cards. Full narrative from root to resolution.",positions:["Root Cause","Crossing Energy","Foundation","Recent Past","Possible Future","Resolution"]},
-  {id:"sl",name:"Shadow & Light",theme:"Shadow Work",desc:"What you're avoiding and what's trying to emerge.",positions:["The Shadow","The Wound","The Gift Inside It","What Light Looks Like","The Integration","Your Next Move"]},
-  {id:"lv1",name:"Where Is This Going?",theme:"Love & Relationships",desc:"A clear look at where things stand.",positions:["Where I Am","Where They Are","Where We Are Headed"]},
-  {id:"mn1",name:"Money & Me",theme:"Money & Career",desc:"Your relationship with money right now.",positions:["What I Believe About Money","What I'm Blocking","What's Available To Me"]}
+  {id:"sl",name:"Shadow & Light",theme:"Shadow Work",desc:"What you're avoiding and what's trying to emerge.",positions:["Shadow","Wound","Gift","Light","Integration","Next Move"]},
+  {id:"lv1",name:"Where Is This Going?",theme:"Love & Relationships",desc:"A clear look at where things stand.",positions:["Me","Them","Us"]},
+  {id:"mn1",name:"Money & Me",theme:"Money & Career",desc:"Your relationship with money right now.",positions:["Belief","Block","Available"]}
 ];
 
 const STORY_PROMPTS=[
@@ -115,7 +114,19 @@ const STORY_PROMPTS=[
   "What are you capable of that scares you?"
 ];
 
-let selLevel=null,selSpread=null,tmpl='',blanks=0,showHints=true;
+const QUALIFIERS=[
+  "and what I notice is _______ (noun - Card X)",
+  "and it makes me feel _______ (adjective - Card X)",
+  "and what surprises me is _______ (noun - Card X)",
+  "and the energy around it is _______ (adjective - Card X)",
+  "and what I keep avoiding is _______ (verb - Card X)",
+  "and underneath that is _______ (noun - Card X)",
+  "and what I really want is _______ (noun - Card X)",
+  "and that looks like _______ (verb - Card X)"
+];
+
+let selLevel=null,selSpread=null,selTheme=null,tmpl='',blanks=0,showHints=true;
+let l5Sentences=[];
 
 function prog(step,total){
   const b=document.getElementById('prog');b.innerHTML='';
@@ -123,43 +134,35 @@ function prog(step,total){
 }
 function S(html){document.getElementById('screen').innerHTML=html;}
 function $(id){return document.getElementById(id);}
-
-function startOver(){selLevel=null;selSpread=null;tmpl='';blanks=0;showHints=true;levelScreen();}
-
+function startOver(){selLevel=null;selSpread=null;selTheme=null;tmpl='';blanks=0;showHints=true;l5Sentences=[];levelScreen();}
 function startOverBtn(){return `<button class="btn-start-over" onclick="startOver()">Start over</button>`;}
 
 function grammarNote(){
   return `<div class="note-box"><strong>Quick reminder:</strong> Noun = a person, place, or thing. &nbsp;Adjective = a describing word. &nbsp;Verb = an action word.</div>`;
 }
-
 function questionNote(){
-  return `<div class="note-box"><strong>How to get a good reading:</strong> The more specific your question or intention, the more your cards have to work with. Instead of "what's happening in my life," try "what do I need to know about this decision?" or "what's blocking me right now?"</div>`;
+  return `<div class="note-box"><strong>How to get a good reading:</strong> The more specific your intention, the more your cards have to work with. Instead of "what's happening in my life," try "what do I need to know about this decision?" or "what's blocking me right now?"</div>`;
 }
 
 function levelScreen(){
-  prog(1,4);
-  const themes=[...new Set(SPREADS.map(s=>s.theme))];
+  prog(1,5);
   S(`
     <div class="step-label">Step 1 of 4</div>
     <h2>Choose your level</h2>
     <p class="sub">Be honest with yourself. You can always level up.</p>
     <div class="level-grid">
-      ${[1,2,3,4].map(n=>`<div class="level-card" onclick="pickLevel(${n})">
-        <div class="level-num">${n}</div>
-        <div>
-          <div class="level-name">Level ${n}</div>
-          <div class="level-desc">${n===1?'1 sentence per card. 2 keywords. Brand new to the method.':n===2?'2 sentences per card. 2 keywords each. Finding your rhythm.':n===3?'3 sentences per card. 2 keywords each. Building confidence.':'4 sentences per card. 2 keywords each. Getting deep.'}</div>
-        </div>
+      ${[
+        {n:1,desc:"1 sentence per card. 2 keywords. Brand new to the method."},
+        {n:2,desc:"2 sentences per card. 2 keywords each. Finding your rhythm."},
+        {n:3,desc:"3 sentences per card. 2 keywords each. Building confidence."},
+        {n:4,desc:"4 sentences per card. 2 keywords each. Getting deep."},
+        {n:5,desc:"Create your own story using the spread as your only prompt."}
+      ].map(lv=>`<div class="level-card" onclick="pickLevel(${lv.n})">
+        <div class="level-num">${lv.n}</div>
+        <div><div class="level-name">${lv.n===5?'Level 5 — Freeform':'Level '+lv.n}</div><div class="level-desc">${lv.desc}</div></div>
       </div>`).join('')}
-      <div class="level-card" onclick="pickLevel(5)">
-        <div class="level-num">5</div>
-        <div>
-          <div class="level-name">Level 5 — Freeform</div>
-          <div class="level-desc">Create your own story using the spread as your only prompt.</div>
-        </div>
-      </div>
     </div>
-    <div style="margin-top:1.5rem;text-align:center;">
+    <div style="margin-top:1rem;text-align:center;">
       <button class="btn-ghost" onclick="importScreen()" style="font-size:13px;">Import a spread I found</button>
     </div>
   `);
@@ -171,7 +174,7 @@ function pickLevel(n){
 }
 
 function themeScreen(){
-  prog(2,4);
+  prog(2,5);
   const themes=[...new Set(SPREADS.map(s=>s.theme))];
   S(`
     <div class="step-label">Step 2 of 4</div>
@@ -180,7 +183,7 @@ function themeScreen(){
     <div class="theme-grid">
       ${themes.map(t=>{
         const count=SPREADS.filter(s=>s.theme===t).length;
-        return `<div class="theme-card" onclick="spreadScreen('${t}')">
+        return `<div class="theme-card" onclick="pickTheme('${t}')">
           <div class="theme-name">${t}</div>
           <div class="theme-count">${count} spread${count!==1?'s':''}</div>
         </div>`;
@@ -190,12 +193,17 @@ function themeScreen(){
   `);
 }
 
-function spreadScreen(theme){
-  prog(3,4);
-  const filtered=SPREADS.filter(s=>s.theme===theme);
+function pickTheme(theme){
+  selTheme=theme;
+  spreadScreen();
+}
+
+function spreadScreen(){
+  prog(3,5);
+  const filtered=SPREADS.filter(s=>s.theme===selTheme);
   S(`
     <div class="step-label">Step 3 of 4</div>
-    <h2>${theme}</h2>
+    <h2>${selTheme}</h2>
     <p class="sub">Choose a spread.</p>
     ${questionNote()}
     <div class="spread-list">
@@ -211,15 +219,17 @@ function spreadScreen(theme){
 
 function pickSpread(id){
   selSpread=SPREADS.find(s=>s.id===id);
-  selLevel.n===5?level5Screen():templateScreen();
+  selLevel.n===5?level5WriteScreen():templateScreen();
 }
 
-function level5Screen(){
-  prog(3,4);
+function level5WriteScreen(){
+  prog(4,5);
+  const savedSentences=l5Sentences.length===selSpread.positions.length?l5Sentences:selSpread.positions.map(()=>'');
   S(`
-    <div class="step-label">Step 3 of 4</div>
-    <h2>${selSpread.name}</h2>
-    <p class="sub">Use each position as your prompt. Write your own fill-in-the-blank sentence for each one. Use _______ where you want a blank.</p>
+    <div class="step-label">Step 4 of 5</div>
+    <h2>Write your story</h2>
+    <p class="sub">Use each position as your only prompt. Type the word <strong>blank</strong> wherever you want a fill-in space to appear.</p>
+    <div class="note-box">example: Shadow is blank and blank makes me feel blank.</div>
     <button class="btn-small" onclick="togglePrompts()" style="margin-bottom:1.25rem;">Story Prompt Library</button>
     <div id="prompts-box" style="display:none;margin-bottom:1.25rem;">
       <div class="prompt-grid">${STORY_PROMPTS.map(p=>`<div class="prompt-pill" onclick="copyPrompt('${p.replace(/'/g,"\\'")}')">${p}</div>`).join('')}</div>
@@ -228,12 +238,11 @@ function level5Screen(){
     ${selSpread.positions.map((pos,i)=>`
       <div>
         <div class="l5-prompt">${pos}</div>
-        <div class="l5-hint">Write your sentence with _______ where you want a blank</div>
-        <textarea class="freeform-ta" id="fs${i}" rows="2" placeholder="e.g. ${pos} is _______ and it makes me feel _______."></textarea>
+        <textarea class="freeform-ta" id="fs${i}" rows="2" placeholder="example: ${pos}">${savedSentences[i]}</textarea>
       </div>
       ${i<selSpread.positions.length-1?'<hr class="slot-divider">':''}
     `).join('')}
-    <div class="btn-row">${startOverBtn()}<button class="btn-ghost" onclick="spreadScreen('${selSpread.theme}')">Back</button><button class="btn-primary" onclick="level5FillScreen()">Pull my cards</button></div>
+    <div class="btn-row">${startOverBtn()}<button class="btn-ghost" onclick="spreadScreen()">Back</button><button class="btn-primary" onclick="level5BuildTemplate()">Build my template</button></div>
   `);
 }
 
@@ -246,30 +255,56 @@ function copyPrompt(text){
   navigator.clipboard.writeText(text).then(()=>alert('Copied! Paste it into your sentence.'));
 }
 
-function level5FillScreen(){
+function level5BuildTemplate(){
+  l5Sentences=selSpread.positions.map((pos,i)=>($('fs'+i).value.trim()||pos));
   blanks=0;
-  const sentences=selSpread.positions.map((pos,i)=>({pos,sentence:$('fs'+i).value.trim()||`${pos} is _______ and it makes me feel _______.`}));
-  tmpl=sentences.map(({pos,sentence})=>`**${pos}**\n${sentence}`).join('\n\n');
+  const processed=l5Sentences.map((sentence,i)=>{
+    const pos=selSpread.positions[i];
+    const withBlanks=sentence.replace(/\bblank\b/gi,()=>`_______ (Card ${i+1})`);
+    return {pos,sentence:withBlanks};
+  });
+  tmpl=processed.map(({pos,sentence})=>`**${pos}**\n${sentence}`).join('\n\n');
+  level5FillScreen(processed);
+}
+
+function level5FillScreen(processed){
+  if(!processed){
+    const secs=tmpl.split(/\*\*([^*]+)\*\*/);
+    processed=[];
+    for(let i=1;i<secs.length;i+=2){
+      processed.push({pos:secs[i].trim(),sentence:(secs[i+1]||'').trim()});
+    }
+  }
+  blanks=0;
   let html='<div class="story-wrap">';
-  sentences.forEach(({pos,sentence})=>{
-    const rendered=sentence.replace(/_______/g,()=>`<input class="blank-input" type="text" id="b${blanks++}" placeholder="___" />`);
-    html+=`<div class="story-section"><div class="story-section-label">${pos}</div><p style="line-height:2.6;">${rendered}</p></div>`;
+  processed.forEach(({pos,sentence})=>{
+    const rendered=sentence.replace(/_______ \(Card \d+\)/g,()=>`<input class="blank-input" type="text" id="b${blanks++}" placeholder="___" />`);
+    html+=`<div class="story-section"><div class="story-section-label">${pos}</div><p style="line-height:2.6;">${rendered.replace(/\n/g,'<br>')}</p></div>`;
   });
   html+='</div>';
+  const copyTmpl=tmpl.replace(/\*\*/g,'').replace(/_______ \(Card \d+\)/g,'_______');
   S(`
-    <div class="step-label">Step 3 of 4</div>
-    <h2>Fill in the blanks</h2>
-    <p class="sub">Pull your cards. Use your keywords or your intuition to fill in each blank.</p>
+    <div class="step-label">Step 5 of 5</div>
+    <h2>Your template</h2>
+    <p class="sub">Pull your cards. Fill in the blanks — or copy your template to use elsewhere.</p>
     ${grammarNote()}
     ${html}
-    <div class="btn-row">${startOverBtn()}<button class="btn-ghost" onclick="level5Screen()">Back</button><button class="btn-primary" onclick="level5StoryScreen()">See my reading</button></div>
+    <div class="btn-row">${startOverBtn()}<button class="btn-ghost" onclick="level5WriteScreen()">Back</button><button class="btn-ghost" onclick="copyTemplate('${encodeURIComponent(copyTmpl)}')">Copy template</button><button class="btn-primary" onclick="level5StoryScreen()">See my reading</button></div>
   `);
 }
 
+function copyTemplate(encoded){
+  const text=decodeURIComponent(encoded);
+  navigator.clipboard.writeText(text).then(()=>alert('Template copied!'));
+}
+
 function level5StoryScreen(){
-  prog(4,4);
+  prog(5,5);
   let filled=tmpl;
-  for(let i=0;i<blanks;i++){const el=$('b'+i);filled=filled.replace('_______',el?el.value.trim()||'_____':'_____');}
+  for(let i=0;i<blanks;i++){
+    const el=$('b'+i);
+    filled=filled.replace(/_______ \(Card \d+\)/,el?el.value.trim()||'_____':'_____');
+  }
   const secs=filled.split(/\*\*([^*]+)\*\*/);
   let html='<div class="story-wrap">';
   for(let i=1;i<secs.length;i+=2){
@@ -277,9 +312,9 @@ function level5StoryScreen(){
     html+=`<div class="story-section"><div class="story-section-label">${h}</div><p style="line-height:1.9;">${b.replace(/\n/g,'<br>')}</p></div>`;
   }
   html+='</div>';
-  window._currentReading=filled.replace(/\*\*/g,'');
+  window._currentReading=filled.replace(/\*\*/g,'').replace(/_______ \(Card \d+\)/g,'_____');
   S(`
-    <div class="step-label">Step 4 of 4</div>
+    <div class="step-label">Step 5 of 5</div>
     <h2>Your reading</h2>
     <p class="sub">Read this out loud. All of it.</p>
     ${html}
@@ -288,13 +323,13 @@ function level5StoryScreen(){
 }
 
 function templateScreen(){
-  prog(3,4);
+  prog(4,5);
   S(`
-    <div class="step-label">Step 3 of 4</div>
+    <div class="step-label">Step 4 of 4</div>
     <h2>Your story template</h2>
     <p class="sub">Pull your cards while we build your template.</p>
     <div class="loading" id="ta">Building your template...</div>
-    <div class="btn-row">${startOverBtn()}<button class="btn-ghost" onclick="spreadScreen('${selSpread.theme}')">Back</button></div>
+    <div class="btn-row">${startOverBtn()}<button class="btn-ghost" onclick="spreadScreen()">Back</button></div>
   `);
   buildTemplate();
 }
@@ -302,7 +337,8 @@ function templateScreen(){
 async function buildTemplate(){
   const posNames=selSpread.positions.map((p,i)=>`Card ${i+1} — ${p}`).join('\n');
   const lv=selLevel.n;
-  const prompt=`You are building a Tarot Stories Method fill-in-the-blank story template using the Mad Lib method.\n\nSpread: "${selSpread.name}"\nPositions:\n${posNames}\n\nLevel ${lv}: Write exactly ${lv} sentence(s) per card position.\n\nRules:\n- Turn the position name into a sentence using its exact words with minimal connecting words\n- Each sentence has exactly 2 blanks using _______ (seven underscores)\n- First blank: main card keyword labeled (noun - Card X), (verb - Card X), or (adjective - Card X)\n- Second blank: a qualifier like "and it makes me feel _______ (adjective - Card X)"\n- Vary word types across positions\n- No mystical language. Real human sentences.\n- For Level 2+, each additional sentence goes one layer deeper into that position\n\nFormat: bold position header, then sentences. Nothing else. No intro. No explanation.\n\nExample:\n**Past (Card 1)**\nRight now I am carrying _______ (noun - Card 1) and it is making me feel _______ (adjective - Card 1).\n\n**Present (Card 2)**\nWhat is happening right now is _______ (verb - Card 2) and the energy feels _______ (adjective - Card 2).`;
+  const qualifierList=QUALIFIERS.join('\n');
+  const prompt=`You are building a Tarot Stories Method fill-in-the-blank story template using the Mad Lib method.\n\nSpread: "${selSpread.name}"\nPositions:\n${posNames}\n\nLevel ${lv}: Write exactly ${lv} sentence(s) per card position.\n\nRules:\n- Turn the position name into a sentence using its exact words with minimal connecting words\n- Each sentence has exactly 2 blanks using _______ (seven underscores)\n- First blank: main card keyword labeled (noun - Card X), (verb - Card X), or (adjective - Card X)\n- Second blank: a qualifier that varies — do NOT use the same qualifier twice. Rotate through options like these:\n${qualifierList}\n- Replace "Card X" with the actual card number\n- Vary word types across positions — mix nouns, verbs, adjectives\n- No mystical language. Real human sentences.\n- For Level 2+, each additional sentence goes one layer deeper into that position\n\nFormat: bold position header, then sentences. Nothing else. No intro. No explanation.\n\nExample:\n**Past (Card 1)**\nRight now I am carrying _______ (noun - Card 1) and what I notice is _______ (noun - Card 1).\n\n**Present (Card 2)**\nWhat is happening right now is _______ (verb - Card 2) and the energy around it is _______ (adjective - Card 2).`;
   try{
     const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1500,messages:[{role:'user',content:prompt}]})});
     if(!r.ok){const e=await r.text();const ta=$('ta');if(ta)ta.innerHTML=`<p class="err">API error ${r.status}: ${e}</p>`;return;}
@@ -326,10 +362,9 @@ function fillScreen(){
   }
   if(blanks===0)html+=`<div class="story-section"><p style="font-size:14px;font-family:Arial,sans-serif;line-height:1.8;">${tmpl.replace(/\n/g,'<br>')}</p></div>`;
   html+='</div>';
-
   const grammarN=selLevel.n<=2?grammarNote():'';
   S(`
-    <div class="step-label">Step 3 of 4</div>
+    <div class="step-label">Step 4 of 4</div>
     <h2>Fill in the blanks</h2>
     <p class="sub">Pull ${selSpread.positions.length} cards from your deck. Use your Tarot Stories Method Keyword Cheatsheet to help you fill in the blanks or trust your intuitive hits.</p>
     <p class="sub" style="margin-top:-0.5rem;">You'll need to use your creativity and intuition to fill in the story. You may need to add additional words besides the keywords in order for the story to make sense.</p>
@@ -339,17 +374,20 @@ function fillScreen(){
       <span>Show word type hints (noun, verb, adjective)</span>
     </div>
     ${html}
-    <div class="btn-row">${startOverBtn()}<button class="btn-ghost" onclick="spreadScreen('${selSpread.theme}')">Back</button><button class="btn-primary" onclick="storyScreen()">See my reading</button></div>
+    <div class="btn-row">${startOverBtn()}<button class="btn-ghost" onclick="spreadScreen()">Back</button><button class="btn-primary" onclick="storyScreen()">See my reading</button></div>
   `);
 }
 
 function toggleHints(){
   showHints=$('hints-toggle').checked;
+  const vals=[];
+  for(let i=0;i<blanks;i++){const el=$('b'+i);vals.push(el?el.value:'');}
   fillScreen();
+  for(let i=0;i<vals.length&&i<blanks;i++){const el=$('b'+i);if(el)el.value=vals[i];}
 }
 
 async function storyScreen(){
-  prog(4,4);
+  prog(5,5);
   let filled=tmpl;
   for(let i=0;i<blanks;i++){const el=$('b'+i);filled=filled.replace('_______',el?el.value.trim()||'_____':'_____');}
   if(!showHints)filled=filled.replace(/ \([^)]+- Card \d+\)/g,'');
@@ -362,22 +400,20 @@ async function storyScreen(){
   if(secs.length<=1)html+=`<div class="story-section"><p style="line-height:1.9;font-family:Arial,sans-serif;">${filled.replace(/\n/g,'<br>')}</p></div>`;
   html+='</div>';
   window._currentReading=filled.replace(/\*\*/g,'').replace(/ \([^)]+- Card \d+\)/g,'');
-
   S(`
-    <div class="step-label">Step 4 of 4</div>
+    <div class="step-label">Step 5 of 5</div>
     <h2>Your reading</h2>
     <p class="sub">Read this out loud. All of it.</p>
     ${html}
     <div class="loading" id="fb">Getting your feedback...</div>
     <div class="btn-row">${startOverBtn()}<button class="btn-ghost" onclick="fillScreen()">Back</button><button class="btn-ghost" onclick="copyReading()">Copy reading</button><button class="btn-primary" onclick="levelScreen()">New reading</button></div>
   `);
-
   await getFeedback(filled);
 }
 
 async function getFeedback(filledStory){
   const lv=selLevel.n;
-  const prompt=`You are a Tarot Stories Method coach. A student just completed a fill-in-the-blank tarot reading.\n\nSpread: "${selSpread.name}"\nLevel: ${lv}\n\nTheir completed reading:\n${filledStory}\n\nRespond with these exact bold headers:\n\n**What's working:**\nOne specific sentence on the strongest storytelling element in their reading.\n\n**One question to sit with:**\nOne honest direct question this reading is pointing to. No fluff.${lv<=2?'\n\n**How did that feel?**\nAsk them: How did that feel to read back to yourself? What surprised you? What would you change? Remind them the reading is not set in stone — they can always go back and adjust it.':''}`;
+  const prompt=`You are a Tarot Stories Method coach. A student just completed a fill-in-the-blank tarot reading.\n\nSpread: "${selSpread.name}"\nLevel: ${lv}\n\nTheir completed reading:\n${filledStory}\n\nRespond with these exact bold headers:\n\n**What's working:**\nOne specific sentence pointing to a concrete moment in their actual reading that shows strong instinct or storytelling. Reference their actual words. Be direct. No fluff, no therapy-speak.\n\n**One question to sit with:**\nOne sharp, honest question this reading is pointing to. Make it land.${lv<=2?'\n\n**How did that feel?**\nSay exactly this: How did that feel to read back to yourself? What surprised you? What would you change? Remember, this reading is not set in stone, nor is it meant to be a "real" reading — you can hit the back button and adjust it if you need to. These practice readings are meant to get you out of your own way and head so you can start trusting those small intuitive hits!':''}`;
   try{
     const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:600,messages:[{role:'user',content:prompt}]})});
     if(!r.ok){const fb=$('fb');if(fb)fb.innerHTML='';return;}
@@ -399,8 +435,7 @@ async function getFeedback(filledStory){
 function copyReading(){
   const text=window._currentReading||'';
   navigator.clipboard.writeText(text).then(()=>{
-    const btns=document.querySelectorAll('[onclick="copyReading()"]');
-    btns.forEach(btn=>{btn.textContent='Copied!';setTimeout(()=>{btn.textContent='Copy reading';},2000);});
+    document.querySelectorAll('[onclick="copyReading()"]').forEach(btn=>{btn.textContent='Copied!';setTimeout(()=>{btn.textContent='Copy reading';},2000);});
   });
 }
 
@@ -414,19 +449,17 @@ function downloadReading(){
 }
 
 function importScreen(){
-  prog(1,4);
-  let posRows='';
-  for(let i=0;i<8;i++){
-    posRows+=`<div class="pos-row"><span class="pos-num">${i+1}</span><input class="card-input" type="text" id="imp${i}" placeholder="Position name" style="margin-bottom:0;" /></div>`;
-  }
-  const sentOptions=[1,2,3,4].map(n=>`<option value="${n}">${n} sentence${n>1?'s':''} per position</option>`).join('');
   S(`
     <div class="step-label">Import a Spread</div>
     <h2>Import a spread</h2>
     <p class="sub">Found a spread you love? Paste the position names below and we'll turn it into a Tarot Stories Method template.</p>
-    <div style="border:0.5px solid #e0d9d0;border-radius:12px;padding:1.25rem;margin-bottom:1rem;">${posRows}</div>
+    <div style="border:0.5px solid #e0d9d0;border-radius:12px;padding:1.25rem;margin-bottom:1rem;">
+      ${Array.from({length:8},(_,i)=>`<div class="pos-row"><span class="pos-num">${i+1}</span><input class="card-input" type="text" id="imp${i}" placeholder="Position name" style="margin-bottom:0;" /></div>`).join('')}
+    </div>
     <div style="margin-bottom:1.5rem;">
-      <select id="imp-sents" style="font-size:14px;padding:9px 12px;border:0.5px solid #e0d9d0;border-radius:8px;background:#fff;color:#111111;font-family:Arial,sans-serif;width:100%;">${sentOptions}</select>
+      <select id="imp-sents" style="font-size:14px;padding:9px 12px;border:0.5px solid #e0d9d0;border-radius:8px;background:#fff;color:#111111;font-family:Arial,sans-serif;width:100%;">
+        ${[1,2,3,4].map(n=>`<option value="${n}">${n} sentence${n>1?'s':''} per position</option>`).join('')}
+      </select>
     </div>
     <div class="btn-row">${startOverBtn()}<button class="btn-ghost" onclick="levelScreen()">Back</button><button class="btn-primary" onclick="importBuild()">Build my template</button></div>
   `);
