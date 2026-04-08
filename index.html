@@ -57,6 +57,8 @@ h2{font-size:20px;font-weight:500;margin-bottom:6px;color:#111111;}
 .sub{font-size:14px;color:#888888;margin-bottom:1rem;font-family:Arial,sans-serif;line-height:1.6;}
 .note-box{background:#f9f7f4;border:0.5px solid #e0d9d0;border-radius:8px;padding:1rem 1.25rem;margin-bottom:1.25rem;font-family:Arial,sans-serif;font-size:13px;color:#555555;line-height:1.7;}
 .note-box strong{color:#111111;font-weight:500;}
+.feel-box{background:#f9f7f4;border-left:3px solid #b89967;border-radius:0 8px 8px 0;padding:1rem 1.25rem;margin-bottom:1.5rem;font-family:Arial,sans-serif;font-size:14px;color:#111111;line-height:1.8;}
+.feel-box strong{display:block;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:#b89967;margin-bottom:8px;}
 .toggle-row{display:flex;align-items:center;gap:10px;margin-bottom:1.25rem;font-family:Arial,sans-serif;font-size:13px;color:#888888;}
 .toggle{position:relative;width:36px;height:20px;cursor:pointer;flex-shrink:0;}
 .toggle input{opacity:0;width:0;height:0;}
@@ -65,14 +67,12 @@ h2{font-size:20px;font-weight:500;margin-bottom:6px;color:#111111;}
 input:checked+.toggle-slider{background:#b89967;}
 input:checked+.toggle-slider:before{transform:translateX(16px);}
 .err{color:#c0392b;font-family:Arial,sans-serif;font-size:13px;padding:1rem 0;}
-.feedback-wrap{background:#f9f7f4;border-radius:12px;padding:1.25rem 1.5rem;margin-bottom:1.5rem;}
 .pos-row{display:flex;gap:8px;align-items:center;margin-bottom:8px;}
 .pos-num{font-size:13px;color:#b89967;font-family:Arial,sans-serif;width:20px;flex-shrink:0;}
 .prompt-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:1rem;}
 .prompt-pill{font-size:12px;font-family:Arial,sans-serif;padding:6px 10px;border:0.5px solid #e0d9d0;border-radius:20px;cursor:pointer;color:#555555;background:#fff;text-align:left;line-height:1.4;}
 .prompt-pill:hover{border-color:#b89967;color:#b89967;}
 .l5-prompt{font-size:22px;font-weight:500;color:#111111;padding:1rem 0 0.25rem;}
-.l5-hint{font-size:12px;color:#b89967;font-family:Arial,sans-serif;margin-bottom:0.75rem;}
 </style>
 </head>
 <body>
@@ -125,8 +125,10 @@ const QUALIFIERS=[
   "and that looks like _______ (verb - Card X)"
 ];
 
+const HOW_DID_THAT_FEEL=`How did that feel to read back to yourself? What surprised you? What would you change? Remember, this reading is not set in stone, nor is it meant to be a "real" reading — you can hit the back button and adjust it if you need to. These practice readings are meant to get you out of your own way and head so you can start trusting those small intuitive hits!`;
+
 let selLevel=null,selSpread=null,selTheme=null,tmpl='',blanks=0,showHints=true;
-let l5Sentences=[];
+let l5Sentences=[],fillVals=[];
 
 function prog(step,total){
   const b=document.getElementById('prog');b.innerHTML='';
@@ -134,14 +136,29 @@ function prog(step,total){
 }
 function S(html){document.getElementById('screen').innerHTML=html;}
 function $(id){return document.getElementById(id);}
-function startOver(){selLevel=null;selSpread=null;selTheme=null;tmpl='';blanks=0;showHints=true;l5Sentences=[];levelScreen();}
+function startOver(){selLevel=null;selSpread=null;selTheme=null;tmpl='';blanks=0;showHints=true;l5Sentences=[];fillVals=[];levelScreen();}
 function startOverBtn(){return `<button class="btn-start-over" onclick="startOver()">Start over</button>`;}
+
+function saveFillVals(){
+  const vals=[];
+  for(let i=0;i<blanks;i++){const el=$('b'+i);vals.push(el?el.value:'');}
+  fillVals=vals;
+}
+
+function restoreFillVals(){
+  for(let i=0;i<fillVals.length&&i<blanks;i++){const el=$('b'+i);if(el)el.value=fillVals[i];}
+}
 
 function grammarNote(){
   return `<div class="note-box"><strong>Quick reminder:</strong> Noun = a person, place, or thing. &nbsp;Adjective = a describing word. &nbsp;Verb = an action word.</div>`;
 }
+
 function questionNote(){
   return `<div class="note-box"><strong>How to get a good reading:</strong> The more specific your intention, the more your cards have to work with. Instead of "what's happening in my life," try "what do I need to know about this decision?" or "what's blocking me right now?"</div>`;
+}
+
+function feelBox(){
+  return `<div class="feel-box"><strong>How did that feel?</strong>${HOW_DID_THAT_FEEL}</div>`;
 }
 
 function levelScreen(){
@@ -219,17 +236,18 @@ function spreadScreen(){
 
 function pickSpread(id){
   selSpread=SPREADS.find(s=>s.id===id);
+  fillVals=[];
   selLevel.n===5?level5WriteScreen():templateScreen();
 }
 
 function level5WriteScreen(){
   prog(4,5);
-  const savedSentences=l5Sentences.length===selSpread.positions.length?l5Sentences:selSpread.positions.map(()=>'');
+  const saved=l5Sentences.length===selSpread.positions.length?l5Sentences:selSpread.positions.map(()=>'');
   S(`
     <div class="step-label">Step 4 of 5</div>
     <h2>Write your story</h2>
     <p class="sub">Use each position as your only prompt. Type the word <strong>blank</strong> wherever you want a fill-in space to appear.</p>
-    <div class="note-box">example: Shadow is blank and blank makes me feel blank.</div>
+    <div class="note-box">example: Past — I have been blank and that has made me blank.</div>
     <button class="btn-small" onclick="togglePrompts()" style="margin-bottom:1.25rem;">Story Prompt Library</button>
     <div id="prompts-box" style="display:none;margin-bottom:1.25rem;">
       <div class="prompt-grid">${STORY_PROMPTS.map(p=>`<div class="prompt-pill" onclick="copyPrompt('${p.replace(/'/g,"\\'")}')">${p}</div>`).join('')}</div>
@@ -238,7 +256,7 @@ function level5WriteScreen(){
     ${selSpread.positions.map((pos,i)=>`
       <div>
         <div class="l5-prompt">${pos}</div>
-        <textarea class="freeform-ta" id="fs${i}" rows="2" placeholder="example: ${pos}">${savedSentences[i]}</textarea>
+        <textarea class="freeform-ta" id="fs${i}" rows="2" placeholder="${pos}">${saved[i]||''}</textarea>
       </div>
       ${i<selSpread.positions.length-1?'<hr class="slot-divider">':''}
     `).join('')}
@@ -256,11 +274,12 @@ function copyPrompt(text){
 }
 
 function level5BuildTemplate(){
-  l5Sentences=selSpread.positions.map((pos,i)=>($('fs'+i).value.trim()||pos));
-  blanks=0;
+  l5Sentences=selSpread.positions.map((pos,i)=>($('fs'+i)?$('fs'+i).value.trim()||pos:pos));
+  blanks=0;fillVals=[];
   const processed=l5Sentences.map((sentence,i)=>{
     const pos=selSpread.positions[i];
-    const withBlanks=sentence.replace(/\bblank\b/gi,()=>`_______ (Card ${i+1})`);
+    let idx=0;
+    const withBlanks=sentence.replace(/\bblank\b/gi,()=>`_______ (blank ${++idx} - Card ${i+1})`);
     return {pos,sentence:withBlanks};
   });
   tmpl=processed.map(({pos,sentence})=>`**${pos}**\n${sentence}`).join('\n\n');
@@ -278,33 +297,36 @@ function level5FillScreen(processed){
   blanks=0;
   let html='<div class="story-wrap">';
   processed.forEach(({pos,sentence})=>{
-    const rendered=sentence.replace(/_______ \(Card \d+\)/g,()=>`<input class="blank-input" type="text" id="b${blanks++}" placeholder="___" />`);
+    const rendered=sentence.replace(/_______ \(blank \d+ - Card \d+\)/g,()=>`<input class="blank-input" type="text" id="b${blanks++}" placeholder="___" />`);
     html+=`<div class="story-section"><div class="story-section-label">${pos}</div><p style="line-height:2.6;">${rendered.replace(/\n/g,'<br>')}</p></div>`;
   });
   html+='</div>';
-  const copyTmpl=tmpl.replace(/\*\*/g,'').replace(/_______ \(Card \d+\)/g,'_______');
+  const copyTmpl=tmpl.replace(/\*\*/g,'').replace(/_______ \(blank \d+ - Card \d+\)/g,'_______');
   S(`
     <div class="step-label">Step 5 of 5</div>
     <h2>Your template</h2>
     <p class="sub">Pull your cards. Fill in the blanks — or copy your template to use elsewhere.</p>
     ${grammarNote()}
     ${html}
-    <div class="btn-row">${startOverBtn()}<button class="btn-ghost" onclick="level5WriteScreen()">Back</button><button class="btn-ghost" onclick="copyTemplate('${encodeURIComponent(copyTmpl)}')">Copy template</button><button class="btn-primary" onclick="level5StoryScreen()">See my reading</button></div>
+    <div class="btn-row">${startOverBtn()}<button class="btn-ghost" onclick="goBackToL5Write()">Back</button><button class="btn-ghost" onclick="copyTemplate('${encodeURIComponent(copyTmpl)}')">Copy template</button><button class="btn-primary" onclick="level5StoryScreen()">See my reading</button></div>
   `);
+  restoreFillVals();
+}
+
+function goBackToL5Write(){
+  saveFillVals();
+  level5WriteScreen();
 }
 
 function copyTemplate(encoded){
-  const text=decodeURIComponent(encoded);
-  navigator.clipboard.writeText(text).then(()=>alert('Template copied!'));
+  navigator.clipboard.writeText(decodeURIComponent(encoded)).then(()=>alert('Template copied!'));
 }
 
 function level5StoryScreen(){
+  saveFillVals();
   prog(5,5);
   let filled=tmpl;
-  for(let i=0;i<blanks;i++){
-    const el=$('b'+i);
-    filled=filled.replace(/_______ \(Card \d+\)/,el?el.value.trim()||'_____':'_____');
-  }
+  fillVals.forEach(val=>{filled=filled.replace(/_______ \(blank \d+ - Card \d+\)/,val||'_____');});
   const secs=filled.split(/\*\*([^*]+)\*\*/);
   let html='<div class="story-wrap">';
   for(let i=1;i<secs.length;i+=2){
@@ -312,12 +334,13 @@ function level5StoryScreen(){
     html+=`<div class="story-section"><div class="story-section-label">${h}</div><p style="line-height:1.9;">${b.replace(/\n/g,'<br>')}</p></div>`;
   }
   html+='</div>';
-  window._currentReading=filled.replace(/\*\*/g,'').replace(/_______ \(Card \d+\)/g,'_____');
+  window._currentReading=filled.replace(/\*\*/g,'').replace(/_______ \(blank \d+ - Card \d+\)/g,'_____');
   S(`
     <div class="step-label">Step 5 of 5</div>
     <h2>Your reading</h2>
     <p class="sub">Read this out loud. All of it.</p>
     ${html}
+    ${feelBox()}
     <div class="btn-row">${startOverBtn()}<button class="btn-ghost" onclick="level5FillScreen()">Back</button><button class="btn-ghost" onclick="copyReading()">Copy reading</button><button class="btn-ghost" onclick="downloadReading()">Download</button><button class="btn-primary" onclick="levelScreen()">New reading</button></div>
   `);
 }
@@ -338,7 +361,7 @@ async function buildTemplate(){
   const posNames=selSpread.positions.map((p,i)=>`Card ${i+1} — ${p}`).join('\n');
   const lv=selLevel.n;
   const qualifierList=QUALIFIERS.join('\n');
-  const prompt=`You are building a Tarot Stories Method fill-in-the-blank story template using the Mad Lib method.\n\nSpread: "${selSpread.name}"\nPositions:\n${posNames}\n\nLevel ${lv}: Write exactly ${lv} sentence(s) per card position.\n\nRules:\n- Turn the position name into a sentence using its exact words with minimal connecting words\n- Each sentence has exactly 2 blanks using _______ (seven underscores)\n- First blank: main card keyword labeled (noun - Card X), (verb - Card X), or (adjective - Card X)\n- Second blank: a qualifier that varies — do NOT use the same qualifier twice. Rotate through options like these:\n${qualifierList}\n- Replace "Card X" with the actual card number\n- Vary word types across positions — mix nouns, verbs, adjectives\n- No mystical language. Real human sentences.\n- For Level 2+, each additional sentence goes one layer deeper into that position\n\nFormat: bold position header, then sentences. Nothing else. No intro. No explanation.\n\nExample:\n**Past (Card 1)**\nRight now I am carrying _______ (noun - Card 1) and what I notice is _______ (noun - Card 1).\n\n**Present (Card 2)**\nWhat is happening right now is _______ (verb - Card 2) and the energy around it is _______ (adjective - Card 2).`;
+  const prompt=`You are building a Tarot Stories Method fill-in-the-blank story template using the Mad Lib method.\n\nSpread: "${selSpread.name}"\nPositions:\n${posNames}\n\nLevel ${lv}: Write exactly ${lv} sentence(s) per card position.\n\nRules:\n- Turn the position name into a sentence using its exact words with minimal connecting words\n- Each sentence has exactly 2 blanks using _______ (seven underscores)\n- First blank: main card keyword labeled (noun - Card X), (verb - Card X), or (adjective - Card X)\n- Second blank: a qualifier — rotate through these options and NEVER repeat the same qualifier twice:\n${qualifierList}\n- Replace Card X with the actual card number\n- Vary word types across positions — mix nouns, verbs, adjectives\n- No mystical language. Real human sentences.\n- For Level 2+, each additional sentence goes one layer deeper into that position\n\nFormat: bold position header, then sentences. Nothing else. No intro. No explanation.\n\nExample:\n**Past (Card 1)**\nRight now I am carrying _______ (noun - Card 1) and what I notice is _______ (noun - Card 1).\n\n**Present (Card 2)**\nWhat is happening right now is _______ (verb - Card 2) and the energy around it is _______ (adjective - Card 2).`;
   try{
     const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1500,messages:[{role:'user',content:prompt}]})});
     if(!r.ok){const e=await r.text();const ta=$('ta');if(ta)ta.innerHTML=`<p class="err">API error ${r.status}: ${e}</p>`;return;}
@@ -374,22 +397,27 @@ function fillScreen(){
       <span>Show word type hints (noun, verb, adjective)</span>
     </div>
     ${html}
-    <div class="btn-row">${startOverBtn()}<button class="btn-ghost" onclick="spreadScreen()">Back</button><button class="btn-primary" onclick="storyScreen()">See my reading</button></div>
+    <div class="btn-row">${startOverBtn()}<button class="btn-ghost" onclick="goBackToSpread()">Back</button><button class="btn-primary" onclick="storyScreen()">See my reading</button></div>
   `);
+  restoreFillVals();
+}
+
+function goBackToSpread(){
+  saveFillVals();
+  spreadScreen();
 }
 
 function toggleHints(){
+  saveFillVals();
   showHints=$('hints-toggle').checked;
-  const vals=[];
-  for(let i=0;i<blanks;i++){const el=$('b'+i);vals.push(el?el.value:'');}
   fillScreen();
-  for(let i=0;i<vals.length&&i<blanks;i++){const el=$('b'+i);if(el)el.value=vals[i];}
 }
 
-async function storyScreen(){
+function storyScreen(){
+  saveFillVals();
   prog(5,5);
   let filled=tmpl;
-  for(let i=0;i<blanks;i++){const el=$('b'+i);filled=filled.replace('_______',el?el.value.trim()||'_____':'_____');}
+  fillVals.forEach(val=>{filled=filled.replace('_______',val||'_____');});
   if(!showHints)filled=filled.replace(/ \([^)]+- Card \d+\)/g,'');
   const secs=filled.split(/\*\*([^*]+)\*\*/);
   let html='<div class="story-wrap">';
@@ -400,36 +428,15 @@ async function storyScreen(){
   if(secs.length<=1)html+=`<div class="story-section"><p style="line-height:1.9;font-family:Arial,sans-serif;">${filled.replace(/\n/g,'<br>')}</p></div>`;
   html+='</div>';
   window._currentReading=filled.replace(/\*\*/g,'').replace(/ \([^)]+- Card \d+\)/g,'');
+  const showFeel=selLevel.n<=2;
   S(`
     <div class="step-label">Step 5 of 5</div>
     <h2>Your reading</h2>
     <p class="sub">Read this out loud. All of it.</p>
     ${html}
-    <div class="loading" id="fb">Getting your feedback...</div>
+    ${showFeel?feelBox():''}
     <div class="btn-row">${startOverBtn()}<button class="btn-ghost" onclick="fillScreen()">Back</button><button class="btn-ghost" onclick="copyReading()">Copy reading</button><button class="btn-primary" onclick="levelScreen()">New reading</button></div>
   `);
-  await getFeedback(filled);
-}
-
-async function getFeedback(filledStory){
-  const lv=selLevel.n;
-  const prompt=`You are a Tarot Stories Method coach. A student just completed a fill-in-the-blank tarot reading.\n\nSpread: "${selSpread.name}"\nLevel: ${lv}\n\nTheir completed reading:\n${filledStory}\n\nRespond with these exact bold headers:\n\n**What's working:**\nOne specific sentence pointing to a concrete moment in their actual reading that shows strong instinct or storytelling. Reference their actual words. Be direct. No fluff, no therapy-speak.\n\n**One question to sit with:**\nOne sharp, honest question this reading is pointing to. Make it land.${lv<=2?'\n\n**How did that feel?**\nSay exactly this: How did that feel to read back to yourself? What surprised you? What would you change? Remember, this reading is not set in stone, nor is it meant to be a "real" reading — you can hit the back button and adjust it if you need to. These practice readings are meant to get you out of your own way and head so you can start trusting those small intuitive hits!':''}`;
-  try{
-    const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:600,messages:[{role:'user',content:prompt}]})});
-    if(!r.ok){const fb=$('fb');if(fb)fb.innerHTML='';return;}
-    const data=await r.json();
-    if(!data.content){const fb=$('fb');if(fb)fb.innerHTML='';return;}
-    const text=data.content.map(b=>b.text||'').join('');
-    const secDefs=lv<=2?[{k:"What's working:",l:"What's working"},{k:"One question to sit with:",l:"One question to sit with"},{k:"How did that feel?",l:"How did that feel?"}]:[{k:"What's working:",l:"What's working"},{k:"One question to sit with:",l:"One question to sit with"}];
-    let html='<div class="feedback-wrap">';
-    secDefs.forEach((sec,i)=>{
-      const start=text.indexOf('**'+sec.k+'**');let end=text.length;
-      secDefs.slice(i+1).forEach(ns=>{const idx=text.indexOf('**'+ns.k+'**');if(idx>start&&idx<end)end=idx;});
-      if(start!==-1){const content=text.slice(start+sec.k.length+4,end).trim();html+=`<div style="margin-bottom:1rem;"><div class="story-section-label">${sec.l}</div><p style="font-size:14px;line-height:1.7;font-family:Arial,sans-serif;color:#111111;">${content.replace(/\n/g,'<br>')}</p></div>`;}
-    });
-    html+='</div>';
-    const fb=$('fb');if(fb)fb.outerHTML=html;
-  }catch(e){const fb=$('fb');if(fb)fb.innerHTML='';}
 }
 
 function copyReading(){
@@ -454,7 +461,7 @@ function importScreen(){
     <h2>Import a spread</h2>
     <p class="sub">Found a spread you love? Paste the position names below and we'll turn it into a Tarot Stories Method template.</p>
     <div style="border:0.5px solid #e0d9d0;border-radius:12px;padding:1.25rem;margin-bottom:1rem;">
-      ${Array.from({length:8},(_,i)=>`<div class="pos-row"><span class="pos-num">${i+1}</span><input class="card-input" type="text" id="imp${i}" placeholder="Position name" style="margin-bottom:0;" /></div>`).join('')}
+      ${Array.from({length:10},(_,i)=>`<div class="pos-row"><span class="pos-num">${i+1}</span><input class="card-input" type="text" id="imp${i}" placeholder="Position name" style="margin-bottom:0;" /></div>`).join('')}
     </div>
     <div style="margin-bottom:1.5rem;">
       <select id="imp-sents" style="font-size:14px;padding:9px 12px;border:0.5px solid #e0d9d0;border-radius:8px;background:#fff;color:#111111;font-family:Arial,sans-serif;width:100%;">
@@ -465,13 +472,14 @@ function importScreen(){
   `);
 }
 
-async function importBuild(){
+function importBuild(){
   const positions=[];
-  for(let i=0;i<8;i++){const v=$('imp'+i).value.trim();if(v)positions.push(v);}
+  for(let i=0;i<10;i++){const v=$('imp'+i);if(v&&v.value.trim())positions.push(v.value.trim());}
   if(positions.length===0){alert('Add at least one position name.');return;}
   const sentsPerPos=parseInt($('imp-sents').value)||1;
   selSpread={id:'imported',name:'My Imported Spread',theme:'General',positions};
   selLevel={n:sentsPerPos,name:`${sentsPerPos} sentence${sentsPerPos>1?'s':''} per position`};
+  fillVals=[];
   templateScreen();
 }
 
