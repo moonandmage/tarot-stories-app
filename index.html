@@ -418,7 +418,7 @@ function storyScreen(){
   prog(5,5);
   let filled=tmpl;
   fillVals.forEach(val=>{filled=filled.replace('_______',val||'_____');});
-  if(!showHints)filled=filled.replace(/ \([^)]+- Card \d+\)/g,'');
+  filled=filled.replace(/ \([^)]+- Card \d+\)/g,'');
   const secs=filled.split(/\*\*([^*]+)\*\*/);
   let html='<div class="story-wrap">';
   for(let i=1;i<secs.length;i+=2){
